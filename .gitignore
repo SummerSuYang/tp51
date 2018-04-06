@@ -1,0 +1,13 @@
+composer.lock
+.env
+/thinkphp/
+/vendor/
+/runtime/
+*.log
+*.css.map
+!.gitkeep
+.idea
+.buildpath
+.project
+.settings
+.DS_Store
