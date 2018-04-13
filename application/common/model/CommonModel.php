@@ -23,7 +23,8 @@ class CommonModel extends Model
     protected $deleteTime = 'delete_time';
     protected $type = [
         'create_time' => 'integer',
-        'update_time' => 'integer'
+        'update_time' => 'integer',
+		'status' => 'interger'
     ];
     protected $insert = ['last_operator'];
     protected $update = ['last_operator'];

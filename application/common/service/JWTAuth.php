@@ -6,6 +6,15 @@
 |--------------------------------------------------------------------------
 |                                             JWT认证服务
 |--------------------------------------------------------------------------
+|checkAuth 负责认证，会根据配置need_nonce_str自动选择是否刷新。可
+|以传入一个scene来设定应用场景
+|
+|generateToken 负责生成token，第一个参数是数据对象（不能是数组），
+|第二个参数是唯一标识用户的“键”，默认是id
+|
+|getReturnToken返回将要返回的token值。如果是刷新操作就返回新生成
+|的token，反之直接将请求token返回
+|--------------------------------------------------------------------------
 */
 
 namespace app\common\service;
@@ -84,6 +93,7 @@ class JWTAuth
 
     /**
      * @param $account
+     * @return string
      * @throws TokenException
      */
     public static function generateToken($account)
@@ -91,6 +101,8 @@ class JWTAuth
         $payload = self::createPayload($account);
 
         self::$returnToken = JWT::encode($payload, self::getSecretKey());
+
+        return self::$returnToken;
     }
 
     /**
