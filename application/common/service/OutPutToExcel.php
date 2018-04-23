@@ -2,8 +2,6 @@
 
 namespace app\common\service;
 
-use think\Exception;
-
 class OutPutToExcel
 {
     public $data;
@@ -12,18 +10,18 @@ class OutPutToExcel
     public $column=[];
     public $key;
     public $field;
-    protected static $instance;
+    public static $instance;
 
     /**
      * OutPutToExcel constructor.
      * @param $data
      * @throws \PHPExcel_Exception
      */
-    public function __construct($data)
+    public function __construct()
     {
-        $this->data = $data;
         $this->phpExcel = new \PHPExcel();
         $this->activeSheet = $this->phpExcel->getActiveSheet();
+        return $this;
     }
 
     /**
@@ -41,8 +39,9 @@ class OutPutToExcel
      * @return $this
      * @throws \PHPExcel_Exception
      */
-    public function handle($field)
+    protected function handle($field, $data)
     {
+        $this->data = $data;
         $this->writeField($field);
         $this->writeRow();
         return $this;
@@ -54,9 +53,9 @@ class OutPutToExcel
      */
     public function writeField(array $field)
     {
-		if(empty($this->data)) return;
-		//展示在excel表中的字段名，一般都是汉字
-		$this->field = $field;
+        if(empty($this->data)) return;
+        //展示在excel表中的字段名，一般都是汉字
+        $this->field = $field;
         //数据中的字段名,用于获取数组中的值
         $this->key = array_keys($this->data[0]);
 
@@ -147,14 +146,11 @@ class OutPutToExcel
         exit;
     }
 
-    public static function __callStatic($method, $args)
+    public static function __callStatic($name, $arguments)
     {
         if(is_null(static::$instance))
             static::$instance = new static();
 
-        if( !method_exists(static::$instance, $method)){
-            throw new Exception("无法调用 $method 方法");
-        }
-        return call_user_func_array([static::$instance, $method], $args);
+        return call_user_func_array([static::$instance, $name], $arguments);
     }
 }
