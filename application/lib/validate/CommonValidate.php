@@ -2,11 +2,12 @@
 
 namespace app\lib\validate;
 
+use app\common\contract\ValidateContract;
 use app\lib\exception\ParamsException;
 use think\facade\Request;
 use think\Validate;
 
-class CommonValidate extends Validate
+class CommonValidate extends Validate implements ValidateContract
 {
     /**
      * 用于对参数进行批量校验

@@ -8,7 +8,7 @@
 namespace app\lib\exception;
 use app\lib\enum\ExceptionEnum;
 
-class AuthException extends BaseException
+class AuthException extends CommonException
 {
     // HTTP 状态码
     protected $code = 400;

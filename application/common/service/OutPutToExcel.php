@@ -2,6 +2,8 @@
 
 namespace app\common\service;
 
+use think\Exception;
+
 class OutPutToExcel
 {
     public $data;
@@ -10,6 +12,7 @@ class OutPutToExcel
     public $column=[];
     public $key;
     public $field;
+    protected static $instance;
 
     /**
      * OutPutToExcel constructor.
@@ -142,5 +145,16 @@ class OutPutToExcel
         $objWriter = \PHPExcel_IOFactory::createWriter($this->phpExcel, 'Excel2007');
         $objWriter->save('php://output');
         exit;
+    }
+
+    public static function __callStatic($method, $args)
+    {
+        if(is_null(static::$instance))
+            static::$instance = new static();
+
+        if( !method_exists(static::$instance, $method)){
+            throw new Exception("无法调用 $method 方法");
+        }
+        return call_user_func_array([static::$instance, $method], $args);
     }
 }

@@ -62,6 +62,7 @@ use app\common\model\AuthGroupModel;
 use app\common\model\AuthRuleModel;
 use app\lib\exception\AuthException;
 use think\facade\Request;
+use think\Exception;
 
 class AuthService
 {
@@ -350,11 +351,20 @@ class AuthService
         return AuthRuleModel::where('status',1)->column('id');
     }
 
-    public static function __callStatic($name, $arguments)
+    /**
+     * @param $method
+     * @param $args
+     * @return mixed
+     * 静态调用类的方法
+     */
+    public static function __callStatic($method, $args)
     {
-        if(is_null(self::$instance))
-            self::$instance = new self();
+        if(is_null(static::$instance))
+            static::$instance = new static();
 
-        return call_user_func_array([self::$instance, $name], $arguments);
+        if( !method_exists(static::$instance, $method)){
+            throw new Exception("无法调用 $method 方法");
+        }
+        return call_user_func_array([static::$instance, $method], $args);
     }
 }

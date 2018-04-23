@@ -32,6 +32,12 @@ class CodeToResponse
 
         //删除成功
         1401 => [200, '删除成功'],
+
+        //上传成功
+        1501 => [201, '上传成功'],
+
+        //上传成功
+        1601 => [201, '绑定成功'],
     ];
 
     public static function show($key)

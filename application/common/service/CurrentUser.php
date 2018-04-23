@@ -25,8 +25,11 @@ class CurrentUser
      */
     public static function getAccount()
     {
-         static::$account = JWTAuth::getAccount();
-         return static::$account;
+        if(is_null(static::$account)){
+            JWTAuth::getAccount();
+        }
+
+        return static::$account;
     }
 
     /**
@@ -63,12 +66,11 @@ class CurrentUser
      */
     public static function getProperty($property)
     {
-        if(is_null(static::$account))
-            static::$account = JWTAuth::getAccount();
+        $account = static::getAccount();
 
-        if(static::$account instanceof CommonModel){
-            if(property_exists(static::$account, $property))
-                return (static::$account)->{$property};
+        if($account instanceof CommonModel){
+            if(property_exists($account, $property))
+                return ($account)->{$property};
             else return null;
         }
 
@@ -81,8 +83,16 @@ class CurrentUser
      */
     public static function toArray()
     {
-        if( !is_null(static::$account))
-            return (static::$account)->toArray();
-        else return [];
+        $account = static::getAccount();
+        if( !is_null($account)){
+            if($account instanceof CommonModel){
+                return ($account)->toArray();
+            }
+            elseif(is_array($account)){
+                return $account;
+            }
+        }
+
+        return [];
     }
 }

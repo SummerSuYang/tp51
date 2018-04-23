@@ -2,8 +2,12 @@
 
 namespace app\common\controller;
 
+use app\common\contract\ControllerContract;
+use app\common\contract\LogicContract;
+use app\common\contract\ValidateContract;
 use app\lib\enum\Version;
 use think\Controller;
+use think\Exception;
 use think\facade\Request;
 use app\common\service\JWTAuth;
 
@@ -12,11 +16,19 @@ use app\common\service\JWTAuth;
 |                                      项目的基础控制器
 |--------------------------------------------------------------------------
 */
-class CommonController extends Controller
+class CommonController extends Controller implements ControllerContract
 {
     //逻辑层与验证器，需要子类通过构造函数依赖注入
     protected $logic;
     protected $validate;
+
+    public function __construct(LogicContract $logic, ValidateContract $validate)
+    {
+        $this->logic = $logic;
+        $this->validate = $validate;
+
+        parent::__construct();
+    }
 
     /**
      * @param $return
@@ -24,7 +36,7 @@ class CommonController extends Controller
      * @return \think\response\Json
      * 通用返回
      */
-    public function response($return, $data = [])
+    public function response($return, $data = [], $type = 'json')
     {
         list($httpCode, $msg) = CodeToResponse::show($return);
 
@@ -45,7 +57,10 @@ class CommonController extends Controller
             'token' => JWTAuth::getReturnToken(),
         ];
 
-        return $this->responseType($returnArray, $httpCode, $header);
+        if(!method_exists($this, $method = 'response'.ucfirst($type)))
+            throw new Exception('无法返回指定类型的数据');
+
+        return call_user_func_array([$this, $method], [$returnArray, $httpCode, $header]);
     }
 
     /**
@@ -55,10 +70,9 @@ class CommonController extends Controller
      * @param string $type
      * @return \think\response\Json
      */
-    protected function responseType($returnArray, $httpCode, $header, $type = 'json')
+    protected function responseJson($returnArray, $httpCode, $header)
     {
-        if ($type == 'json')
-            return json($returnArray, $httpCode, $header);
+        return json($returnArray, $httpCode, $header);
     }
 
     /**
@@ -68,6 +82,7 @@ class CommonController extends Controller
     public function index()
     {
         $data = $this->logic->getLists();
+
         return $this->response(1201, $data);
     }
 

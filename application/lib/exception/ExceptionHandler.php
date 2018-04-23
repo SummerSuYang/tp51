@@ -26,7 +26,7 @@ class ExceptionHandler extends Handle
 
     public function render(Exception $e)
     {
-        if ($e instanceof BaseException) {
+        if ($e instanceof CommonException) {
             // 接受自定义的错误体信息
             $this->code = $e->code;
             $this->msg = $e->msg;

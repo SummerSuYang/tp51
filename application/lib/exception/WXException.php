@@ -5,11 +5,11 @@
  * Time: 15:42
  */
 
-namespace app\lib\exception
+namespace app\lib\exception;
 use app\lib\enum\ExceptionEnum;
 use app\lib\exception\BaseException;
 
-class WXException extends BaseException
+class WXException extends CommonException
 {
     // HTTP 状态码
     protected $code = 400;

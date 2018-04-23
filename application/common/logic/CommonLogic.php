@@ -10,10 +10,11 @@
 
 namespace app\common\logic;
 
+use app\common\contract\LogicContract;
 use think\Exception;
 use think\facade\Request;
 
-abstract class CommonLogic
+abstract class CommonLogic implements LogicContract
 {
     //查询数据库时的“范畴”
     protected $scope = [];
@@ -42,7 +43,9 @@ abstract class CommonLogic
      */
     public function getLists()
     {
-        return ($this->model())::lists($this->scope, $this->where, $this->with, $this->order, $this->append, $this->hidden);
+        return ($this->model())::lists(
+            $this->scope, $this->where, $this->with,
+            $this->order, $this->append, $this->hidden);
     }
 
     /**

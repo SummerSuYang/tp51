@@ -44,8 +44,11 @@ class JWTAuth
     /**
      * @throws TokenException
      */
-    public static function checkAuth()
+    public static function checkAuth($scene = '')
     {
+        //验证场景
+        if(!empty($scene)) self::setScene($scene);
+
         //如果有随机串就说明是刷新的反之仅仅需要认证
         if(self::needNonce())
             self::refresh();

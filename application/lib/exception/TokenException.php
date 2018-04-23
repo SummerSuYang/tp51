@@ -4,7 +4,7 @@ namespace app\lib\exception;
 
 use app\lib\enum\ExceptionEnum;
 
-class TokenException extends BaseException
+class TokenException extends CommonException
 {
     // HTTP 状态码
     protected $code = 403;

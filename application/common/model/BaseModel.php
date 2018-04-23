@@ -10,11 +10,13 @@
 
 
 namespace app\common\model;
+
+use think\Exception;
 use think\model\concern\SoftDelete;
 use think\Model;
 use app\common\service\JWTAuth;
 
-class CommonModel extends Model
+class BaseModel extends Model
 {
     use SoftDelete;
 
@@ -28,19 +30,30 @@ class CommonModel extends Model
     ];
     protected $insert = ['last_operator'];
     protected $update = ['last_operator'];
-    protected static $paginate = 10;
+    protected $paginate = 10;
+    private static $instance = null;
 
     /**
      * 分页列表
      */
-    public static function lists(
-        $scope=[],$where=[],$with=[],$order=[],$append = [],$hidden = []
+    protected function lists(
+        $scope=[],$where=[],$with=[],$order=[],$append=[],$hidden=[]
     )
     {
-        $query = static::baseQuery($scope, $where, $with, $order);
+        //范围和关联
+        $query = static::scope($scope)->with($with);
+
+        //条件筛选
+        if(!empty($where)) $this->queryWhere($query, $where);
+
+        //排序
+        if( !empty($order)){
+            foreach ($order as $item)
+                $query->order($item[0], $item[1]);
+        }
 
         //分页
-        $list = $query->paginate(static::$paginate);
+        $list = $query->paginate($this->paginate);
 
         //数据集合
         $collection = $list->getCollection();
@@ -51,48 +64,7 @@ class CommonModel extends Model
         //隐藏字段
         if(!empty($hidden)) $collection = $collection->hidden($hidden);
 
-        return self::listReturn($collection->toArray(), $list);
-    }
-
-    /**
-     *获取集合
-     */
-    public function getCollections(
-        $scope=[],$where=[],$with=[],$order=[],$append = [],$hidden = [],$fields = []
-    )
-    {
-        $query = static::baseQuery($scope, $where, $with, $order);
-
-        if(!empty($fields)) $collection = $query->field($fields)->select();
-        else $collection = $query->select();
-
-        //追加字段
-        if(!empty($append)) $collection = $collection->append();
-
-        //隐藏字段
-        if(!empty($hidden)) $collection = $collection->hidden($hidden);
-
-        return $collection;
-    }
-
-    /**
-     * 基础的query
-     */
-    public static function baseQuery($scope=[],$where=[],$with=[],$order=[])
-    {
-        //范围和关联
-        $query = static::scope($scope)->with($with);
-
-        //条件筛选
-        if(!empty($where)) static::queryWhere($query, $where);
-
-        //排序
-        if( !empty($order)){
-            foreach ($order as $item)
-                $query->order($item[0], $item[1]);
-        }
-
-        return $query;
+        return $this->listReturn($collection->toArray(), $list);
     }
 
     /**
@@ -101,7 +73,7 @@ class CommonModel extends Model
      * @return array
      * 通用的分页数据
      */
-    public static function listReturn($data, $list)
+    public function listReturn($data, $list)
     {
         return [
             'paginate' =>
@@ -118,11 +90,14 @@ class CommonModel extends Model
     /**
      * 获取一个对象
      */
-    public static function getById($id, $scope = [], $with = [], $append = [], $hidden = [])
+    protected function getById($id, $scope = [], $with = [], $append = [], $hidden = [])
     {
         $record = static::scope($scope)->with($with)->find(['id' => $id]);
-        if(is_null($record)) return null;
-        else return $record->hidden($hidden)->append($append);
+        if(is_null($record)) {
+            return null;
+        } else{
+            return $record->hidden($hidden)->append($append);
+        }
     }
 
     /**
@@ -131,7 +106,7 @@ class CommonModel extends Model
      * @return mixed
      * 列表的筛选项
      */
-    public static function queryWhere($query, $where)
+    public function queryWhere($query, $where)
     {
         return $query;
     }
@@ -171,9 +146,28 @@ class CommonModel extends Model
      * @param $paginate
      * 设置每页的数据个数
      */
-    public function setPaginate($paginate)
+    protected function setPaginate($paginate)
     {
         if(isPositiveInteger($paginate))
-            static::$paginate = $paginate;
+            $this->paginate = $paginate;
+
+        return $this;
+    }
+
+    /**
+     * @param $method
+     * @param $args
+     * @return mixed
+     * 静态调用类的方法
+     */
+    public static function __callStatic($method, $args)
+    {
+        if(is_null(static::$instance))
+            static::$instance = new static();
+
+        if( !method_exists(static::$instance, $method)){
+            throw new Exception("无法调用 $method 方法");
+        }
+        return call_user_func_array([static::$instance, $method], $args);
     }
 }

@@ -12,7 +12,7 @@ namespace app\lib\exception;
 
 use app\lib\enum\ExceptionEnum;
 
-class UploadFileException extends BaseException
+class UploadFileException extends CommonException
 {
     // HTTP 状态码
     protected $code = 400;
