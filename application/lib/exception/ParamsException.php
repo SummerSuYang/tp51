@@ -9,7 +9,7 @@ class ParamsException extends CommonException
     // HTTP 状态码
     protected $code = 400;
     // 错误消息
-    protected $msg = '参数错误';
+    protected $msg = 'PARAMS EXCEPTION';
     // 错误码 13000
     protected $errorCode = ExceptionEnum::PARAMS;
     // 自定义的错误集

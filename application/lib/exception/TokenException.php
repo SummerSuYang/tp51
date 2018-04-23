@@ -9,7 +9,7 @@ class TokenException extends CommonException
     // HTTP 状态码
     protected $code = 403;
     // 错误消息
-    protected $msg = 'INVALID TOKEN';
+    protected $msg = 'TOKEN EXCEPTION';
     // 错误码 12000
     protected $errorCode = ExceptionEnum::TOKEN;
     // 自定义的错误集

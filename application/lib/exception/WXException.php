@@ -14,7 +14,7 @@ class WXException extends CommonException
     // HTTP 状态码
     protected $code = 400;
     // 错误消息
-    protected $msg = 'WX Error';
+    protected $msg = 'WX EXCEPTION';
     // 错误码 10000
     protected $errorCode = ExceptionEnum::WX;
     // 自定义的错误集

@@ -7,7 +7,6 @@
 
 namespace app\lib\exception;
 
-
 use Exception;
 use think\facade\Config;
 use think\exception\Handle;

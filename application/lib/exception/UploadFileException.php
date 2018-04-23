@@ -17,7 +17,7 @@ class UploadFileException extends CommonException
     // HTTP 状态码
     protected $code = 400;
     // 错误消息
-    protected $msg = 'Upload file exception';
+    protected $msg = 'UPLOAD FILE EXCEPTION';
     // 错误码 10000
     protected $errorCode = ExceptionEnum::UPLOAD_FILE;
     // 自定义的错误集

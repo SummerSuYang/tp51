@@ -13,7 +13,7 @@ class AuthException extends CommonException
     // HTTP 状态码
     protected $code = 400;
     // 错误消息
-    protected $msg = 'Authenticate failed';
+    protected $msg = 'AUTH EXCEPTION';
     // 错误码 10000
     protected $errorCode = ExceptionEnum::AUTH;
     // 自定义的错误集
