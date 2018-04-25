@@ -890,3 +890,8 @@ function calc_operate_years($registerTime)
 
     return 0;
 }
+function getExtension($fileName)
+{
+    $position = strripos($fileName, '.');
+    return strtolower(substr($fileName, $position+1));
+}

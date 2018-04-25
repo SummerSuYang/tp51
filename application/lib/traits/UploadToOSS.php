@@ -29,14 +29,14 @@ trait UploadToOSS
      * @return $this
      * type等于1的时候是公有上传等于其他为私有上传
      */
-    public function initialOSSClient($type = 1)
+    public function initialOSSClient($uploadType = 1, $fileType = 1)
     {
         $this->OSSClient = new OssClient(
             $this->getOSSAccessKeyId(),
             $this->getOSSAccessKeySecret(),
             $this->getOSSEndPoint());
 
-        $this->uploadType = $type;
+        $this->uploadType = $uploadType;
 
         return $this;
     }
@@ -58,12 +58,15 @@ trait UploadToOSS
         //extension 文件扩展名
         $object = $this->getOSSObjectPath($info['extension']);
         try{
-            if($this->uploadType === 1)
+            if($this->uploadType === 1){
                 //公有方式上传
                 $result = $this->uploadToOSSPublic($info['tmp_name'], $object);
-               //私有方式上传
-            else $result = $this->uploadToOSSPrivate($info['tmp_name'], $object);
+            }
 
+            else{
+                //私有方式上传
+                $result = $this->uploadToOSSPrivate($info['tmp_name'], $object);
+            }
             //删除本地文件
             if($deleteLocalFile) $this->deleteLocalFile($info['tmp_name']);
 
@@ -98,9 +101,18 @@ trait UploadToOSS
      * @param $extension
      * @return string
      */
-    public function getOSSObjectPath($extension)
+    public function getOSSObjectPath($extension, $name = '')
     {
-        $name = $this->OSSUnique().'.'.$extension;
+        if(!empty($name)){
+            $object = $this->OSSPath.'/'.$name;
+            //判断当前的bucket中有没有已经存在的object
+            if($this->OSSClient->doesObjectExist($this->bucket, $object)){
+                $name = $this->OSSUnique().'.'.$extension;
+            }
+        }
+        else {
+            $name = $this->OSSUnique().'.'.$extension;
+        }
         return $this->OSSPath.'/'.$name;
     }
 
@@ -167,4 +179,6 @@ trait UploadToOSS
     {
         return $this->OSSClient->createBucket($bucket, 'public-read-write');
     }
+
+
 }

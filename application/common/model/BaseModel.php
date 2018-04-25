@@ -78,10 +78,10 @@ class BaseModel extends Model
         return [
             'paginate' =>
                 [
-                    'total' => $list->total(),
-                    'per_page' => $list->listRows(),
-                    'current_page' => $list->currentPage(),
-                    'last_page' => $list->lastPage(),
+                    'total' => (int)$list->total(),
+                    'per_page' => (int)$list->listRows(),
+                    'current_page' => (int)$list->currentPage(),
+                    'last_page' => (int)$list->lastPage(),
                 ],
             'data' => $data,
         ];

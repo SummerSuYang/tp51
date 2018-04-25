@@ -22,29 +22,43 @@ class UploadFileException extends CommonException
     protected $errorCode = ExceptionEnum::UPLOAD_FILE;
     // 自定义的错误集
     protected $errorMsg = [
-        24001 => [
+        14001 => [
             'code' => 400,
-            'msg' => '缺少文件'
+            'msg' => '文件类型异常'
         ],
 
-        24002 => [
+        14002 => [
             'code' => 400,
-            'msg' => '缺少文件类型'
+            'msg' => '无法获取endpoint'
         ],
 
-        24003 => [
+        14003 => [
             'code' => 400,
-            'msg' => '上传文件信息有误'
+            'msg' => '无法获取accessKeyId'
         ],
 
-        24004 => [
+        14004 => [
             'code' => 400,
-            'msg' => '上传文件类型错误'
+            'msg' => '无法获取secret'
         ],
 
-        24005 => [
+        14005 => [
             'code' => 400,
             'msg' => '上传文件太大'
+        ],
+
+        14006 => [
+            'code' => 400,
+            'msg' => '上传文件缺少必要信息'
+        ],
+
+        14007 => [
+            'code' => 400,
+            'msg' => '无法获取bucket'
+        ],
+        14008 => [
+            'code' => 400,
+            'msg' => 'bucket不存在'
         ],
     ];
 
