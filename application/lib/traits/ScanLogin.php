@@ -143,7 +143,7 @@ trait ScanLogin
     {
         //根据wechat_admins表里的记录生成token
         $token = JWTAuth::generateToken($wxRecord);
-        $url = $url = config('wx.unbindWebUrl');
+        $url = config('wx.unbindWebUrl');
         $para = [
             'token' =>$token,
         ];
@@ -158,10 +158,13 @@ trait ScanLogin
         //有则更新无则新建
         $wxRecord = $this->wxSaveOrUpdate($userInfo);
         //判断有没有绑定
-        if($wxRecord->admin_id == 0 || $wxRecord->status == 2)
+        if($wxRecord->admin_id == 0 || $wxRecord->status == 2){
             //没绑定
             return $this->wxUnBind($wxRecord);
+        }
         //已绑定
-        else return $this->wxHasBind($wxRecord);
+        else {
+            return $this->wxHasBind($wxRecord);
+        }
     }
 }

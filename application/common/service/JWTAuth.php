@@ -44,7 +44,7 @@ class JWTAuth
     /**
      * @throws TokenException
      */
-    public static function checkAuth($scene = '')
+    public static function handle($scene = '')
     {
         //验证场景
         if(!empty($scene)) self::setScene($scene);

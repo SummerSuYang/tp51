@@ -26,7 +26,7 @@ class CurrentUser
     public static function getAccount()
     {
         if(is_null(static::$account)){
-            JWTAuth::getAccount();
+            static::$account = JWTAuth::getAccount();
         }
 
         return static::$account;
@@ -64,15 +64,18 @@ class CurrentUser
      * @return null
      * 返回用户的某一个属性值
      */
-    public static function getProperty($property)
+    public static function getAccountAttribute($attribute)
     {
         $account = static::getAccount();
 
         if($account instanceof CommonModel){
-            if(property_exists($account, $property))
-                return ($account)->{$property};
+            if(property_exists($account, $attribute))
+                return ($account)->{$attribute};
             else return null;
         }
+
+        if(is_array($account) && key_exists($attribute, $account))
+            return $account[$attribute];
 
         return null;
     }
@@ -84,6 +87,7 @@ class CurrentUser
     public static function toArray()
     {
         $account = static::getAccount();
+
         if( !is_null($account)){
             if($account instanceof CommonModel){
                 return ($account)->toArray();

@@ -9,7 +9,9 @@
 */
 
 return [
+    'default' => [
         'accessKeyId' => 'LTAI6JVNEbAQ2CCS',
         'accessKeySecret' => 'rDDwPK4mejJQJSbEObD8ueBIrNefO9',
         'endpoint' => 'http://oss-cn-hangzhou.aliyuncs.com',
+    ]
 ];

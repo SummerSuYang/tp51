@@ -13,6 +13,5 @@ namespace app\common\model;
 
 class AuthGroupModel extends CommonModel
 {
-    protected $table = 'auth_group';
 
 }

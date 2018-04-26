@@ -15,9 +15,6 @@ namespace app\common\model;
 
 class ProvincialModel extends CommonModel
 {
-    protected $table = 'provincials';
-    //protected $hidden = ['id'];
-
     public static function nameLists($scope=[],$where=[],$with=[],$order=[],$append = [])
     {
         //范围和关联

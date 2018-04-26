@@ -10,12 +10,8 @@
 
 namespace app\common\model;
 
-
-use app\common\model\CommonModel;
-
 class WXAdminModel extends CommonModel
 {
-    protected $table = 'wechat_admins';
     protected $insert = [];
     protected $update = [];
     public function admin()
@@ -24,5 +20,4 @@ class WXAdminModel extends CommonModel
             'name', 'phone'
         ]);
     }
-
 }

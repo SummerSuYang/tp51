@@ -14,6 +14,5 @@ namespace app\common\model;
 */
 class CityModel extends CommonModel
 {
-    protected $table = 'cities';
     protected $hidden = ['id', 'pid'];
 }

@@ -12,7 +12,6 @@ namespace app\common\model;
 
 class AuthRuleModel extends CommonModel
 {
-    protected $table = 'auth_rule';
     protected $hidden = [
         'path', 'level', 'name', 'icon', 'condition', 'remark', 'is_menu', 'wight',
         'status', 'create_time', 'update_time', 'delete_time'

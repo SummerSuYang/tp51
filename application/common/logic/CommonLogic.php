@@ -30,12 +30,19 @@ abstract class CommonLogic implements LogicContract
     protected $hidden = [];
     //向数据库写入的字段，也就是新建和更新时的字段
     protected $writeFields = [];
+    //基础model，由抽象方法configModel指定
+    private $model;
 
     //逻辑层的基础模型
-    abstract public function model();
+    abstract protected function configModel();
 
     //查找一条记录
     abstract public function getById();
+
+    public function __construct()
+    {
+        $this->configModel();
+    }
 
     /**
      * @return mixed
@@ -43,7 +50,7 @@ abstract class CommonLogic implements LogicContract
      */
     public function getLists()
     {
-        return ($this->model())::lists(
+        return ($this->model)::lists(
             $this->scope, $this->where, $this->with,
             $this->order, $this->append, $this->hidden);
     }
@@ -57,7 +64,7 @@ abstract class CommonLogic implements LogicContract
     {
         try{
             $para = $this->fieldFilter();
-            $new = ($this->model())::create($para);
+            $new = ($this->model)::create($para);
             return ['id' => $new->id];
         }catch (Exception $e){
             throw $e;
@@ -109,17 +116,17 @@ abstract class CommonLogic implements LogicContract
     protected function fieldFilter()
     {
         $fields = [];
-        if(method_exists($this, $method = Request::method().'Fields'))
+        if(method_exists($this, $method = Request::method().'Field'))
             $fields = $this->{$method};
 
-        return Request::only($fields, $method);
+        return Request::only($fields, Request::method());
     }
 
     /**
      * @return array
      * 新建时的字段
      */
-    protected function postFields()
+    protected function postField()
     {
         return $this->writeFields;
     }
@@ -128,7 +135,7 @@ abstract class CommonLogic implements LogicContract
      * @return array
      * 更新时的字段
      */
-    protected function putFields()
+    protected function putField()
     {
         return $this->writeFields;
     }
@@ -139,7 +146,7 @@ abstract class CommonLogic implements LogicContract
      * @return $this
      * 向某个成员数组追加一些字段
      */
-    protected function append($property, $field = [])
+    protected function appendField($property, $field = [])
     {
         if(property_exists($this, $property) && is_array( $this->{$propert})){
             if(is_string($field)) $field = explode(',', $field);
@@ -157,7 +164,7 @@ abstract class CommonLogic implements LogicContract
      * @return $this
      * 向某个数组成员移除一些字段，慎用
      */
-    protected function remove($property, $field = [])
+    protected function removeField($property, $field = [])
     {
         if(property_exists($this, $property) && is_array( $this->{$propert})){
             if(is_string($field)) $field = explode(',', $field);
@@ -173,7 +180,7 @@ abstract class CommonLogic implements LogicContract
      * @return $this
      * 只返回某个数组成员的一部分字段
      */
-    protected function only($property, $field = [])
+    protected function onlyField($property, $field = [])
     {
         if(property_exists($this, $property) && is_array( $this->{$propert})){
             if(is_string($field)) $field = explode(',', $field);

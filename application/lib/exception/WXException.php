@@ -19,17 +19,17 @@ class WXException extends CommonException
     protected $errorCode = ExceptionEnum::WX;
     // 自定义的错误集
     protected $errorMsg = [
-        28001 => [
+        15001 => [
             'code' => 400,
             'msg' => '获取不到code'
         ],
 
-        28002 => [
+        15002 => [
             'code' => 400,
             'msg' => '无法解析从微信服务器返回的数据'
         ],
 
-        28003 => [
+        15003 => [
             'code' => 400,
             'msg' => '从微信服务器返回的数据有误'
         ],
