@@ -50,8 +50,9 @@ class JWTAuth
         if(!empty($scene)) self::setScene($scene);
 
         //如果有随机串就说明是刷新的反之仅仅需要认证
-        if(self::needNonce())
+        if(self::needNonce()) {
             self::refresh();
+        }
         else {
             self::authenticate();
             //不需要刷新，返回的token就是请求的token
@@ -66,8 +67,9 @@ class JWTAuth
      */
     public static function setScene($scene = '')
     {
-        if(empty($scene))
+        if(empty($scene)){
             throw new TokenException(12010);
+        }
         self::$scene = $scene;
     }
 
@@ -77,13 +79,16 @@ class JWTAuth
      */
     protected static function resolveAccount($payload)
     {
-        if( !key_exists('uid', $payload) || !isPositiveInteger($payload['uid']))
+        if( !key_exists('uid', $payload) || !isPositiveInteger($payload['uid'])) {
             throw new TokenException(12007);
+        }
 
         //获取account的方法需要具体的实现
         self::$account = (self::getModel())::get($payload['uid']);
 
-        if(empty(self::$account)) throw new TokenException(12011);
+        if(empty(self::$account)) {
+            throw new TokenException(12011);
+        }
     }
 
     /**
@@ -115,7 +120,9 @@ class JWTAuth
      */
     protected static function createPayload($account)
     {
-        if( !key_exists('id', $account)) throw new TokenException(12008);
+        if( !key_exists('id', $account)) {
+            throw new TokenException(12008);
+        }
         $payload['uid'] = $account['id'];
         // 过期时间 = 当前请求时间 + token过期时间
         $payload['exp'] = Request::time() + self::getExpireIn();
@@ -166,8 +173,9 @@ class JWTAuth
      */
     protected static function verifyNonce($payload = [], $markAsExpired = true)
     {
-        if( !key_exists('nonce', $payload))
+        if( !key_exists('nonce', $payload)){
             throw new TokenException(12004);
+        }
 
         $nonceStr = $payload['nonce'];
 
@@ -190,7 +198,9 @@ class JWTAuth
         $payload = self::verifyToken();
 
         //验证随机串
-        if(self::needNonce()) self::verifyNonce($payload);
+        if(self::needNonce()) {
+            self::verifyNonce($payload);
+        }
 
         //检查并存储用户信息
         self::resolveAccount($payload);
@@ -205,7 +215,9 @@ class JWTAuth
     protected static function refresh()
     {
         //前面没有认证需要先认证
-        if(self::$passAuth === false) self::authenticate();
+        if(self::$passAuth === false) {
+            self::authenticate();
+        }
 
         self::generateToken((self::$account)->toArray());
     }
@@ -243,8 +255,9 @@ class JWTAuth
      */
     protected static function getSecretKey()
     {
-       if(empty($secretKey = Config::get("token.".self::$scene.".secret_key")))
+       if(empty($secretKey = Config::get("token.".self::$scene.".secret_key"))){
            throw new TokenException(12009);
+       }
 
        return$secretKey;
     }
@@ -254,8 +267,9 @@ class JWTAuth
      */
     protected static function getExpireIn()
     {
-        if(empty($expireIn = Config::get("token.".self::$scene.".expires_in")))
+        if(empty($expireIn = Config::get("token.".self::$scene.".expires_in"))){
             return 3600;
+        }
 
         return (int)$expireIn;
     }
@@ -265,8 +279,10 @@ class JWTAuth
      */
     protected static function needNonce()
     {
-        if(empty($needNonce = Config::get("token.".self::$scene.".need_nonce_str")))
+        if(empty($needNonce = Config::get("token.".self::$scene.".need_nonce_str"))){
             return false;
+        }
+
         return $needNonce;
     }
 
@@ -276,8 +292,10 @@ class JWTAuth
      */
     protected static function getModel()
     {
-        if(empty($model = Config::get("token.".self::$scene.".model")))
+        if(empty($model = Config::get("token.".self::$scene.".model"))) {
             throw new TokenException(12009);
+        }
+
         return $model;
     }
 }

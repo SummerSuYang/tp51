@@ -136,7 +136,9 @@ trait AliMsg
     {
         $cacheData = serialize(['code' => $code, 'time' => Request::time()]);
         $result = Cache::set($this->msgCacheKey($mobile), $cacheData, $this->msgExpiresIn);
-        if (!$result) throw new CacheException(30001);
+        if (!$result) {
+            throw new CacheException(30001);
+        }
     }
 
     /**
@@ -150,13 +152,19 @@ trait AliMsg
     {
         $cacheKey = $this->msgCacheKey($mobile);
 
-        if( !Cache::has($cacheKey)) throw new SmsException(29001);
+        if( !Cache::has($cacheKey)) {
+            throw new SmsException(29001);
+        }
 
         $cacheDate = unserialize(Cache::get($cacheKey));
 
-        if(!is_array($cacheDate)) throw new SmsException(29003);
+        if(!is_array($cacheDate)) {
+            throw new SmsException(29003);
+        }
 
-        if($cacheDate['code'] != $code) throw new SmsException(29002);
+        if($cacheDate['code'] != $code) {
+            throw new SmsException(29002);
+        }
 
         Cache::rm($cacheKey);
 
@@ -173,14 +181,19 @@ trait AliMsg
     {
         $cacheKey = $this->msgCacheKey($mobile);
 
-        if( !Cache::has($cacheKey)) return true;
+        if( !Cache::has($cacheKey)) {
+            return true;
+        }
 
         $cacheDate = unserialize(Cache::get($cacheKey));
 
-        if(!is_array($cacheDate)) throw new SmsException(29003);
+        if(!is_array($cacheDate)) {
+            throw new SmsException(29003);
+        }
 
-        if((Request::time() - $cacheDate['time']) <= $this->msgResendTime)
+        if((Request::time() - $cacheDate['time']) <= $this->msgResendTime){
             throw new SmsException(29004);
+        }
 
         return true;
     }

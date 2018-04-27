@@ -19,4 +19,8 @@ class Status
     const SHOW = 1;
     //隐藏
     const HIDDEN = 2;
+    //微信账号还没有绑定到具体的账号
+    const UNBIND = 2;
+    //微信账号已经绑定到具体的账号
+    const BIND = 1;
 }

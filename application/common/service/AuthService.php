@@ -24,9 +24,6 @@ auth_group_access表
 CREATE TABLE `auth_group_access` (
   `uid` bigint(20) unsigned NOT NULL COMMENT '会员ID',
   `group_id` bigint(20) unsigned NOT NULL COMMENT '级别ID',
-  UNIQUE KEY `uid_group_id` (`uid`,`group_id`),
-  KEY `uid` (`uid`),
-  KEY `group_id` (`group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权限分组表';
 
 auth_rule表
@@ -48,11 +45,12 @@ CREATE TABLE `auth_rule` (
   `update_time` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '更新时间',
   `delete_time` int(10) unsigned DEFAULT NULL COMMENT '删除时间',
   PRIMARY KEY (`id`),
-  KEY `pid` (`pid`),
-  KEY `weigh` (`weigh`),
-  KEY `path` (`path`(191)),
-  KEY `name` (`name`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT COMMENT='节点表';
+|--------------------------------------------------------------------------
+|userRulesId 获取用户的权限树，无论是登陆成功后还是刷新都是一样的
+|checkAccess 判断用户有没有当前接口的访问权限
+|groupRules 新建或更新权限组时使用的方法
+|--------------------------------------------------------------------------
 */
 
 namespace app\common\service;
@@ -63,6 +61,7 @@ use app\common\model\AuthRuleModel;
 use app\lib\exception\AuthException;
 use think\facade\Request;
 use think\Exception;
+use app\lib\enum\Status;
 
 class AuthService
 {
@@ -70,46 +69,42 @@ class AuthService
     private static $instance = null;
 
     /**
-     * @param string $userId
-     * @return array
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
      * 返回一个用户所在的所有权限组
      */
     protected function getGroups($userId = '')
     {
-        if(isPositiveInteger($userId)) $where['uid'] = $userId;
+        if(isPositiveInteger($userId)) {
+            $where['uid'] = $userId;
+        }
 
         $groupId = AuthAccessModel::where($where)->column('group_id');
 
-        $where = [['status', '=', 1], ['id', 'in', $groupId]];
+        $where = [['status', '=', Status::SHOW], ['id', 'in', $groupId]];
 
         return AuthGroupModel::where($where)->select()->toArray();
     }
 
     /**
-     * @param $groups
-     * @return array
      * 组装权限组的id
      */
     protected  function groupRulesId($groups)
     {
-        if(empty($groups)) return [];
+        if(empty($groups)) {
+            return [];
+        }
         $rulesId = [];
         //一个用户可能在多个组里面
-        foreach ($groups as $item)
+        foreach ($groups as $item){
             $rulesId = array_merge($rulesId, explode(',',$item['rules']));
-        if(empty($rulesId)) return [];
-        else return array_unique($rulesId);
+        }
+        if(empty($rulesId)) {
+            return [];
+        }
+
+       return array_unique($rulesId);
     }
 
     /**
-     * @param $userId
-     * @return array
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
      * 一个用户所有的权限id
      */
     protected function userRulesId($userId)
@@ -121,44 +116,6 @@ class AuthService
     }
 
     /**
-     * @param $rulesId
-     * @param bool $login
-     * @param int $pid
-     * @return array
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
-     * 权限列表，树形结构
-     */
-    protected function treeRulesList($rulesId, $login = true, $pid = 0)
-    {
-        $rules = $this->rulesList($rulesId);
-
-        if($login) return $this->loginTree($rules,$pid);
-        else return $this->buildTree($rules, $pid);
-    }
-
-    /**
-     * @param $rulesId
-     * @return array
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
-     * 权限列表，平行结构
-     */
-    protected function rulesList($rulesId)
-    {
-        if(empty($rulesId)) return [];
-
-        return AuthRuleModel::where('id', 'in', $rulesId)->select()->toArray();
-    }
-
-    /**
-     * @param $userId
-     * @return array
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
      * 一个用户所有的权限
      */
     protected function userRulesList($userId)
@@ -168,78 +125,103 @@ class AuthService
     }
 
     /**
-     * @param array $elements
-     * @param int $pid
-     * @return array
-     * 登录成功时的构造树方法
+     * 权限列表，树形结构
      */
-    public  function loginTree(array &$elements, $pid = 0)
+    protected function treeRulesList($rulesId, $login = true, $pid = 0)
     {
-        if(empty($elements)) return $elements;
+        $rules = $this->rulesList($rulesId);
 
-        $tree = [];
+        if($login) {
+            return $this->loginTree($rules,$pid);
+        }
+
+        return $this->buildTree($rules, $pid);
+    }
+
+    /**
+     * 权限列表，平行结构
+     */
+    protected function rulesList($rulesId)
+    {
+        if(empty($rulesId)) {
+            return [];
+        }
+
+        return AuthRuleModel::where('id', 'in', $rulesId)->select()->toArray();
+    }
+
+    /**
+     * 登录成功时返回给前端的权限列表,适合判断
+     */
+    protected  function loginTree(array &$elements, $pid = 0)
+    {
+        if(empty($elements)) {
+            return $elements;
+        }
+
+        $branch = [];
+
         $parentsId =$this->parentNodeIds();
 
         foreach ($elements as $key => $element) {
             if ($element['pid'] == $pid) {
+                //如果是非叶子节点就继续找其子节点
                 if(in_array($element['id'], $parentsId)){
                     $children = $this->loginTree($elements, $element['id']);
-                    //children是叶子节点
-                    if(is_string($children))$tree[$element['action']][] = $children;
-                    //如果没有子节点
-                    //else if(empty($children)) $tree = $element['title'];
-                    //children是个集合
-                    else $tree[$element['action']] = $children;
-                    unset($elements[$key]);
+                    $branch[$element['action']] = $children;
                 }
-                else $tree[] = $element['action'];
+                //如果是叶子节点
+                else {
+                    $branch[] = $element['action'];
+                }
+
+                unset($elements[$key]);
             }
         }
 
-        return $tree;
+        return $branch;
     }
 
     /**
-     * @param array $elements
-     * @param int $pid
-     * @return array
+     * 新建或者更新权限组的时候返回的权限列表，适合循环
      */
-    public function buildTree(array &$elements, $pid = 0)
+    protected function buildTree(array &$elements, $pid = 0)
     {
         if(empty($elements)) return $elements;
 
-        $tree = [];
+        $branch = [];
 
-        //所有父节点的id，因为下面要用递归构造“一棵树”，如果一个节点
-        //是叶子节点那么就没有必要再使用递归去查找它的子节点了
         $parentsId = $this->parentNodeIds();
 
         foreach ($elements as &$element) {
             if ($element['pid'] == $pid) {
-                if(in_array($element['id'], $parentsId))
-                    //去找孩子。递归一直找到底
+                if(in_array($element['id'], $parentsId)){
                     $element['children'] = $this->buildTree($elements, $element['id']);
-                else  $element['children'] = [];
-                $tree[] = $element;
+                }
+                else{
+                    $element['children'] = [];
+                }
+                $branch[] = $element;
                 unset($element);
             }
         }
-        return $tree;
+        return $branch;
     }
 
     /**
-     * @return array
      * 获取所有的非叶子节点的id
      */
     protected function parentNodeIds()
     {
-        if( !empty($this->parentIds)) return $this->parentIds;
+        if( !empty($this->parentIds)) {
+            return $this->parentIds;
+        }
 
         //叶子结点的level
         $maxLevel = AuthRuleModel::max('level');
 
         $where = [
-            ['status', '=', 1],
+            ['status', '=', Status::SHOW],
             ['level', '<', $maxLevel]
         ];
 
@@ -249,55 +231,50 @@ class AuthService
     }
 
     /**
-     * @return bool
-     * @throws AuthException
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
      * 检查一个权限
      */
     public function checkAccess()
     {
         $where[] = [
-            ['status', '=', 1],
-            ['name', '=', Request::routeInfo()['route']]
+            ['status', '=', Status::SHOW],
+            ['name', '=', strtolower(Request::routeInfo()['route'])]
         ];
         //用户当前访问的路由
         $route = AuthRuleModel::get($where);
         //如果查出来是null说明规则表中没有这项规则，就认为这个路由不需
         //要鉴权，任何用户都可以访问
-        if(is_null($route)) return true;
+        if(is_null($route)) {
+            return true;
+        }
+
         $routeId = $route->id;
 
-        $uid = JWTAuth::getAccount()['id'];
+        $uid = CurrentUser::getAccountAttribute('id');
         //用户所有的rules id
         $userRulesId = $this->userRulesId($uid);
 
-        if(!in_array($routeId, $userRulesId))
+        if(!in_array($routeId, $userRulesId)){
             throw new AuthException(11003);
+        }
+
 
         return true;
     }
 
     /**
-     * @return array
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
+     * 返回一个权限组的所有权限的列表
      */
-   protected function groupRules()
+    public function groupRules()
     {
-        if(!empty(Request::param('group_id')))
+        if(!empty(Request::param('group_id'))) {
             return $this->updateGroupRules();
-        else
+        }
+        else {
             return $this->createGroupRules();
+        }
     }
 
     /**
-     * @return array
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
      * 新建权限组时的权限列表
      */
     protected function createGroupRules()
@@ -318,11 +295,11 @@ class AuthService
     {
         $groupId = Request::param('group_id');
 
-        $group = AuthGroupModel::get(['id' => $groupId, 'status' => 1]);
-
-        $allRules = $this->rulesList($this->allRulesId());
+        $group = AuthGroupModel::get(['id' => $groupId, 'status' => Status::SHOW]);
 
         $groupRulesId = explode(',', $group->rules);
+
+        $allRules = $this->rulesList($this->allRulesId());
 
         $this->markRules($allRules, $groupRulesId);
 
@@ -333,7 +310,7 @@ class AuthService
      * @param $allRules
      * @param $groupRulesId
      */
-    public function markRules(&$allRules, $groupRulesId)
+   protected function markRules(&$allRules, $groupRulesId)
     {
         array_walk($allRules, function(&$v, $k) use ($groupRulesId){
             if(in_array($v['id'], $groupRulesId))
@@ -348,7 +325,7 @@ class AuthService
      */
     protected function allRulesId()
     {
-        return AuthRuleModel::where('status',1)->column('id');
+        return AuthRuleModel::where('status',Status::SHOW)->column('id');
     }
 
     /**

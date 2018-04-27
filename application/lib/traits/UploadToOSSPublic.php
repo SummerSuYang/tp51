@@ -96,30 +96,34 @@ trait UploadToOSSPublic
      */
     protected function checkUploadFile()
     {
-        if(is_null($file = Request::file('file')))
+        if(is_null($file = Request::file('file'))) {
             throw new UploadFileException(14001);
+        }
 
         $info = $file->getInfo();
 
         //检查文件必须的信息
         if( !key_exists('name' , $info) || !key_exists('tmp_name', $info) ||
-            !key_exists('size', $info))
+            !key_exists('size', $info)){
             throw new UploadFileException(14006);
+        }
+
 
         //获取文件扩展名
         $info['extension'] = $this->getExtension($info);
 
         //检查大小
-        if($info['size'] > $this->uploadMaxSize[$this->uploadFileType])
+        if($info['size'] > $this->uploadMaxSize[$this->uploadFileType]) {
             throw new UploadFileException(14005);
+        }
 
         /* info是一个数组，包括六个 $k=>$v
-       name 是 上传文件的原始的名字
-       type是类型（并不是扩展名）
-       tmp_name（临时路径）
-       size 大小
-       error（这个暂时没有用不是到干什么的）
-       extension 文件扩展名*/
+            name 是 上传文件的原始的名字
+            type是类型（并不是扩展名）
+            tmp_name（临时路径）
+            size 大小
+            error（这个暂时没有用不是到干什么的）
+            extension 文件扩展名*/
         return $info;
     }
 

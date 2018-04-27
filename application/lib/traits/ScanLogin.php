@@ -10,7 +10,9 @@
 
 namespace app\lib\traits;
 
+use app\common\service\CurrentUser;
 use app\common\service\JWTAuth;
+use app\lib\enum\Status;
 use app\lib\exception\WXException;
 use app\common\model\WXAdminModel;
 use think\facade\Request;
@@ -117,7 +119,7 @@ trait ScanLogin
 
     protected function wxHasBind($wxRecord)
     {
-        $admin = AdminModel::get(['id' => $wxRecord->admin_id, 'status' => 1]);
+        $admin = AdminModel::get(['id' => $wxRecord->admin_id, 'status' => Status::SHOW]);
         //如果用户绑定的账号现在异常，则跳到未绑定
         if(is_null($admin)) return $this->unBind($wxRecord);
         //根据admins表里的记录生成token
@@ -158,7 +160,7 @@ trait ScanLogin
         //有则更新无则新建
         $wxRecord = $this->wxSaveOrUpdate($userInfo);
         //判断有没有绑定
-        if($wxRecord->admin_id == 0 || $wxRecord->status == 2){
+        if($wxRecord->admin_id == 0 || $wxRecord->status == Status::UNBIND){
             //没绑定
             return $this->wxUnBind($wxRecord);
         }

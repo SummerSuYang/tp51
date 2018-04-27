@@ -33,5 +33,4 @@ class AuthException extends CommonException
             'msg' => '账户无此权限'
         ],
     ];
-
 }
