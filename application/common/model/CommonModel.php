@@ -21,23 +21,22 @@ class CommonModel extends Model
 {
     use SoftDelete;
 
-    protected $autoWriteTimestamp = true;
-    protected $resultSetType = 'collection';
     protected $deleteTime = 'delete_time';
     protected $type = [
         'create_time' => 'integer',
         'update_time' => 'integer',
+        'delete_time' => 'integer',
 		'status' => 'integer'
     ];
     protected $insert = ['admin'];
     protected $update = ['admin'];
-    protected $paginate = 10;
-    private static $instance = null;
+    //每一页的数据数
+    protected static $perPage = 10;
 
     /**
      * 分页列表
      */
-    protected function lists(
+    protected static function lists(
         $scope=[],$where=[],$with=[],$order=[],$append=[],$hidden=[]
     )
     {
@@ -45,7 +44,9 @@ class CommonModel extends Model
         $query = static::scope($scope)->with($with);
 
         //条件筛选
-        if(!empty($where)) $this->queryWhere($query, $where);
+        if(!empty($where)) {
+            static::queryWhere($query, $where);
+        }
 
         //排序
         if( !empty($order)){
@@ -54,18 +55,22 @@ class CommonModel extends Model
         }
 
         //分页
-        $list = $query->paginate($this->paginate);
+        $list = $query->paginate(static::$perPage);
 
         //数据集合
         $collection = $list->getCollection();
 
         //追加字段
-        if(!empty($append)) $collection = $collection->append($append);
+        if(!empty($append)) {
+            $collection = $collection->append($append);
+        }
 
         //隐藏字段
-        if(!empty($hidden)) $collection = $collection->hidden($hidden);
+        if(!empty($hidden)) {
+            $collection = $collection->hidden($hidden);
+        }
 
-        return $this->listReturn($collection->toArray(), $list);
+        return static::listReturn($collection->toArray(), $list);
     }
 
     /**
@@ -74,7 +79,7 @@ class CommonModel extends Model
      * @return array
      * 通用的分页数据
      */
-    public function listReturn($data, $list)
+    public static function listReturn($data, $list)
     {
         return [
             'paginate' =>
@@ -91,13 +96,20 @@ class CommonModel extends Model
     /**
      * 获取一个对象
      */
-    protected function getById($id, $scope = [], $with = [], $append = [], $hidden = [])
+    protected static function getById($id, $scope = [], $with = [], $append = [], $hidden = [])
     {
         $record = static::scope($scope)->with($with)->find(['id' => $id]);
         if(is_null($record)) {
-            return null;
+            return $record;
         } else{
-            return $record->hidden($hidden)->append($append);
+            if( !empty($append)) {
+                $record->append($append);
+            }
+            if( !empty($hidden)) {
+                $record->hidden($hidden);
+            }
+
+            return $record;
         }
     }
 
@@ -107,7 +119,7 @@ class CommonModel extends Model
      * @return mixed
      * 列表的筛选项
      */
-    public function queryWhere($query, $where)
+    public static function queryWhere($query, $where)
     {
         return $query;
     }
@@ -122,51 +134,12 @@ class CommonModel extends Model
     }
 
     /**
-     * @param $value
-     * @return false|string
-     * 创造时间获取器
-     */
-    public function getCreateTimeAttr($value)
-    {
-        return date('Y-m-d H:i', $value);
-    }
-
-    /**
-     * @param $value
-     * @return false|string
-     * 修改时间获取器
-     */
-    public function getUpdateTimeAttr($value)
-    {
-        return date('Y-m-d H:i', $value);
-    }
-
-    /**
      * @param $paginate
      * 设置每页的数据个数
      */
-    protected function setPaginate($paginate)
+    public static function setPerPage($perPage)
     {
-        if(isPositiveInteger($paginate))
-            $this->paginate = $paginate;
-
-        return $this;
-    }
-
-    /**
-     * @param $method
-     * @param $args
-     * @return mixed
-     * 静态调用类的方法
-     */
-    public static function __callStatic($method, $args)
-    {
-        if(is_null(static::$instance))
-            static::$instance = new static();
-
-        if( !method_exists(static::$instance, $method)){
-            throw new Exception("无法调用 $method 方法");
-        }
-        return call_user_func_array([static::$instance, $method], $args);
+        if(isPositiveInteger($perPage))
+            static::$perPage = $perPage;
     }
 }

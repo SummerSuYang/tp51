@@ -14,10 +14,12 @@ class TokenException extends CommonException
     protected $errorCode = ExceptionEnum::TOKEN;
     // 自定义的错误集
     protected $errorMsg = [
+        //找不到前传过来的token
         12001 => [
             'code' => 401,
             'msg' => '缺少token',
         ],
+        //token被设置了nbf，现在还不能使用
         12002=>[
             'code' => 401,
             'msg' => 'token现在还不能使用'
@@ -26,10 +28,12 @@ class TokenException extends CommonException
             'code' => 401,
             'msg' => 'Token已经过期'
         ],
+        //header 中缺少必要的声明或者加密算法不被接收或者payload为空
         12004=>[
             'code' => 401,
             'msg' => 'token中的信息错误'
         ],
+        //token可能被修改过导致签名验证失败
         12005=>[
             'code' => 401,
             'msg' => '签名验证失败'

@@ -19,11 +19,13 @@
 
 namespace app\common\service;
 
+use app\common\model\CommonModel;
 use app\lib\exception\TokenException;
 use Firebase\JWT\BeforeValidException;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\SignatureInvalidException;
+use think\Exception;
 use think\facade\Cache;
 use think\facade\Config;
 use think\facade\Request;
@@ -34,7 +36,7 @@ class JWTAuth
     protected static $passAuth = false;
     //从前端带过来的token
     protected static $requestToken;
-    //刷新后的token
+    //返回给前端的token
     protected static $returnToken;
     //存储已经认证过的用户信息
     protected static $account;
@@ -47,17 +49,20 @@ class JWTAuth
     public static function handle($scene = '')
     {
         //验证场景
-        if(!empty($scene)) self::setScene($scene);
+        if( !empty($scene)) {
+            self::setScene($scene);
+        }
 
         //如果有随机串就说明是刷新的反之仅仅需要认证
         if(self::needNonce()) {
-            self::refresh();
+            $token = self::refresh();
         }
         else {
-            self::authenticate();
-            //不需要刷新，返回的token就是请求的token
-            self::$returnToken = self::$requestToken;
+            $token = self::authenticate();
         }
+
+        //返回给前端的token
+        self::$returnToken = $token;
     }
 
     /**
@@ -83,8 +88,10 @@ class JWTAuth
             throw new TokenException(12007);
         }
 
+        $class = self::getModel();
+        $model = new $class;
         //获取account的方法需要具体的实现
-        self::$account = (self::getModel())::get($payload['uid']);
+        self::$account = $model->get((int)$payload['uid']);
 
         if(empty(self::$account)) {
             throw new TokenException(12011);
@@ -96,7 +103,14 @@ class JWTAuth
      */
     protected static function getTokenFromRequest()
     {
-        return Request::header('token');
+        if(Request::has('token')) {
+            $token = Request::param('token');
+        }
+        else {
+            $token = Request::header('token');
+        }
+
+        return $token;
     }
 
     /**
@@ -108,9 +122,7 @@ class JWTAuth
     {
         $payload = self::createPayload($account);
 
-        self::$returnToken = JWT::encode($payload, self::getSecretKey());
-
-        return self::$returnToken;
+       return JWT::encode($payload, self::getSecretKey());
     }
 
     /**
@@ -120,6 +132,14 @@ class JWTAuth
      */
     protected static function createPayload($account)
     {
+        if($account instanceof CommonModel){
+            $account = $account->toArray();
+        }
+
+        if( !is_array($account)) {
+            throw new TokenException(12012);
+        }
+
         if( !key_exists('id', $account)) {
             throw new TokenException(12008);
         }
@@ -207,6 +227,9 @@ class JWTAuth
 
         //当且仅当上面三步都完成以后才会标记“认证成功”
        self::$passAuth = true;
+
+       //返回请求的token
+       return self::$requestToken;
     }
 
     /**
@@ -219,7 +242,8 @@ class JWTAuth
             self::authenticate();
         }
 
-        self::generateToken((self::$account)->toArray());
+        //response给前端的token
+        return self::generateToken(self::$account);
     }
 
     /**
@@ -297,5 +321,14 @@ class JWTAuth
         }
 
         return $model;
+    }
+
+    /**
+     * @return mixed
+     * 生成唯一的字符串
+     */
+    protected function uniqueNonceStr()
+    {
+        return createUniqidNonceStr();
     }
 }
