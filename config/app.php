@@ -132,7 +132,8 @@ return [
     'error_message'          => '页面错误！请稍后再试～',
     // 显示错误信息
     'show_error_msg'         => false,
-    // 异常处理handle类 留空使用 \think\exception\Handle
-    'exception_handle'       => '',
-
+    // 异常处理handle类
+    'exception_handle'       => 'app\lib\exception\ExceptionHandler',
+    // 使用自定义错误处理机制
+    'custom_exception_handle'=> false,
 ];

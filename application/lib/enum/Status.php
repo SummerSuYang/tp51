@@ -15,12 +15,10 @@ class Status
 {
     //原始状态
     const ORIGINAL = 0;
-    //正常展示
-    const SHOW = 1;
-    //隐藏
+    //正常展示的状态
+    const NORMAL = 1;
+    //隐藏的状态
     const HIDDEN = 2;
-    //微信账号还没有绑定到具体的账号
-    const UNBIND = 2;
-    //微信账号已经绑定到具体的账号
-    const BIND = 1;
+    //微信账号还没有绑定到具体的账号的状态
+    const UNBIND = 3;
 }

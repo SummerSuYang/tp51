@@ -34,11 +34,20 @@ class CurrentUser
 
     /**
      * @return mixed
-     * 返回调用我们自己网站的token
+     * 返回的token
      */
-    public static function getToken()
+    public static function getResponseToken()
     {
         return JWTAuth::getReturnToken();
+    }
+
+    /**
+     * @return mixed
+     * 请求的token
+     */
+    public static function getRequestToken()
+    {
+        return JWTAuth::getRequestToken();
     }
 
     /**
@@ -69,9 +78,12 @@ class CurrentUser
         $account = static::getAccount();
 
         if($account instanceof CommonModel){
-            if(property_exists($account, $attribute))
+            if(property_exists($account, $attribute)) {
                 return $account->{$attribute};
-            else return null;
+            }
+            else {
+                return null;
+            }
         }
 
         if(is_array($account) && key_exists($attribute, $account)) {

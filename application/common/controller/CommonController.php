@@ -5,6 +5,7 @@ namespace app\common\controller;
 use app\common\contract\ControllerContract;
 use app\common\contract\LogicContract;
 use app\common\contract\ValidateContract;
+use app\common\service\CurrentUser;
 use app\lib\enum\Version;
 use think\Controller;
 use think\Exception;
@@ -54,11 +55,12 @@ class CommonController extends Controller implements ControllerContract
 
         $header = [
             'version' => Version::CURRENT_VERSION,
-            'token' => JWTAuth::getReturnToken(),
+            'token' => CurrentUser::getResponseToken(),
         ];
 
-        if(!method_exists($this, $method = 'response'.ucfirst($type)))
+        if(!method_exists($this, $method = 'response'.ucfirst($type))) {
             throw new Exception('无法返回指定类型的数据');
+        }
 
         return call_user_func_array([$this, $method], [$returnArray, $httpCode, $header]);
     }

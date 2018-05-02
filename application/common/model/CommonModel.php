@@ -12,10 +12,8 @@
 namespace app\common\model;
 
 use app\common\service\CurrentUser;
-use think\Exception;
 use think\model\concern\SoftDelete;
 use think\Model;
-use app\common\service\JWTAuth;
 
 class CommonModel extends Model
 {
@@ -139,7 +137,8 @@ class CommonModel extends Model
      */
     public static function setPerPage($perPage)
     {
-        if(isPositiveInteger($perPage))
+        if(isPositiveInteger($perPage)){
             static::$perPage = $perPage;
+        }
     }
 }
