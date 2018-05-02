@@ -148,7 +148,7 @@ class JWTAuth
         $payload['exp'] = Request::time() + self::getExpireIn();
         if (self::needNonce()) {
             // 需要随机字符串
-            $payload['nonce'] = createUniqidNonceStr();
+            $payload['nonce'] = self::uniqueNonceStr();
         }
 
         return $payload;

@@ -73,6 +73,7 @@ class AuthService
      */
     protected function getGroups($userId = '')
     {
+        $where = [];
         if(isPositiveInteger($userId)) {
             $where['uid'] = $userId;
         }
@@ -125,7 +126,7 @@ class AuthService
     }
 
     /**
-     * 权限列表，树形结构
+     * 权限列表，树形结构(树形结构分为两种)
      */
     protected function treeRulesList($rulesId, $login = true, $pid = 0)
     {
@@ -256,7 +257,6 @@ class AuthService
         if(!in_array($routeId, $userRulesId)){
             throw new AuthException(11003);
         }
-
 
         return true;
     }

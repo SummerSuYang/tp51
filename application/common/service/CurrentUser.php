@@ -70,33 +70,14 @@ class CurrentUser
 
         if($account instanceof CommonModel){
             if(property_exists($account, $attribute))
-                return ($account)->{$attribute};
+                return $account->{$attribute};
             else return null;
         }
 
-        if(is_array($account) && key_exists($attribute, $account))
+        if(is_array($account) && key_exists($attribute, $account)) {
             return $account[$attribute];
-
-        return null;
-    }
-
-    /**
-     * @return mixed
-     * 将用户的信息转换成数组返回
-     */
-    public static function toArray()
-    {
-        $account = static::getAccount();
-
-        if( !is_null($account)){
-            if($account instanceof CommonModel){
-                return ($account)->toArray();
-            }
-            elseif(is_array($account)){
-                return $account;
-            }
         }
 
-        return [];
+        return null;
     }
 }
