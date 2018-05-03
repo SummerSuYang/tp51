@@ -8,7 +8,7 @@ class ExceptionEnum
     //鉴权或认证错误
     const AUTH = 11000;
     //有关token的错误
-    const TOKEN = 12000;
+    const JWT = 12000;
     //提交过来的数据错误
     const PARAMS = 13000;
 	 //上传附加错误

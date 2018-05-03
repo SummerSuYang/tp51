@@ -20,7 +20,8 @@
 namespace app\common\service;
 
 use app\common\model\CommonModel;
-use app\lib\exception\TokenException;
+use app\lib\enum\Status;
+use app\lib\exception\JWTException;
 use Firebase\JWT\BeforeValidException;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
@@ -43,7 +44,7 @@ class JWTAuth
     protected static $scene;
 
     /**
-     * @throws TokenException
+     * 对外认证的接口
      */
     public static function handle($scene = '')
     {
@@ -65,57 +66,56 @@ class JWTAuth
     }
 
     /**
-     * @param string $scene
-     * @throws TokenException
      * 选择应用场景
      */
     public static function setScene($scene = '')
     {
         if(empty($scene)){
-            throw new TokenException(12010);
+            throw new JWTException(12010);
         }
         self::$scene = $scene;
     }
 
     /**
-     * @param $payload
-     * @throws TokenException
+     * 解析并验证账号信息
      */
     protected static function resolveAccount($payload)
     {
         if( !key_exists('uid', $payload) || !isPositiveInteger($payload['uid'])) {
-            throw new TokenException(12007);
+            throw new JWTException(12007);
         }
 
+        //获取account的方法需要具体的实现
         $class = self::getModel();
         $model = new $class;
-        //获取account的方法需要具体的实现
-        self::$account = $model->get((int)$payload['uid']);
+        $account = $model->get((int)$payload['uid']);
 
-        if(empty(self::$account)) {
-            throw new TokenException(12011);
+        if(is_null($account)) {
+            throw new JWTException(12011);
         }
+
+        if($account->status != Status::NORMAL){
+            throw new JWTException(12013);
+        }
+
+        self::$account = $account;
     }
 
     /**
      * @return mixed
+     * 获取前端传过来的token
      */
     protected static function getTokenFromRequest()
     {
         if(Request::has('token')) {
-            $token = Request::param('token');
-        }
-        else {
-            $token = Request::header('token');
+            return Request::param('token');
         }
 
-        return $token;
+        return Request::header('token');
     }
 
     /**
-     * @param $account
-     * @return string
-     * @throws TokenException
+     * 根据用户的model或数组生成token
      */
     public static function generateToken($account)
     {
@@ -125,9 +125,7 @@ class JWTAuth
     }
 
     /**
-     * @param $account
-     * @return mixed
-     * @throws TokenException
+     * 根据用户的model或数组生成payload
      */
     protected static function createPayload($account)
     {
@@ -136,11 +134,11 @@ class JWTAuth
         }
 
         if( !is_array($account)) {
-            throw new TokenException(12012);
+            throw new JWTException(12012);
         }
 
         if( !key_exists('id', $account)) {
-            throw new TokenException(12008);
+            throw new JWTException(12008);
         }
         $payload['uid'] = $account['id'];
         // 过期时间 = 当前请求时间 + token过期时间
@@ -154,52 +152,49 @@ class JWTAuth
     }
 
     /**
-     * @return array
-     * @throws TokenException
+     * 验证token
      */
     protected static function verifyToken()
     {
         if (empty(self::$requestToken = self::getTokenFromRequest()))
-                throw new TokenException(12001);
+                throw new JWTException(12001);
 
         try {
             $payLoad = (array)JWT::decode(self::$requestToken, self::getSecretKey(), ['HS256']);
         }
         catch (ExpiredException $e) {
             //过期了
-            throw new TokenException(12003);
+            throw new JWTException(12003);
         }
         catch (SignatureInvalidException $e) {
             //签名认证失败
-            throw new TokenException(12005);
+            throw new JWTException(12005);
         }
         catch (BeforeValidException $e) {
             //token被设置了nbf，现在还不能使用
-            throw new TokenException(12002);
+            throw new JWTException(12002);
         }
         catch (\UnexpectedValueException $e) {
             //header 中缺少必要的声明或者加密算法不被接收或者payload为空
-            throw new TokenException(12004);
+            throw new JWTException(12004);
         }
 
         return $payLoad;
     }
 
     /**
-     * @param array $payload
-     * @param bool $markAsExpired
-     * @throws TokenException
+     * 验证随机串（刷新用）
      */
     protected static function verifyNonce($payload = [], $markAsExpired = true)
     {
         if( !key_exists('nonce', $payload)){
-            throw new TokenException(12004);
+            throw new JWTException(12004);
         }
 
         $nonceStr = $payload['nonce'];
 
         if (Cache::has($nonceStr)) { // 存在表示已用过
-            throw new TokenException(12003);
+            throw new JWTException(12003);
         } else {
             if($markAsExpired) {
                 // 标识已使用
@@ -209,7 +204,7 @@ class JWTAuth
     }
 
     /**
-     * @throws TokenException
+     * 验证流程
      */
     protected static function authenticate()
     {
@@ -232,7 +227,7 @@ class JWTAuth
     }
 
     /**
-     * @throws TokenException
+     * 刷新流程
      */
     protected static function refresh()
     {
@@ -273,20 +268,19 @@ class JWTAuth
    }
 
     /**
-     * @return mixed
-     * @throws TokenException
+     * 获取secret key
      */
     protected static function getSecretKey()
     {
        if(empty($secretKey = Config::get("token.".self::$scene.".secret_key"))){
-           throw new TokenException(12009);
+           throw new JWTException(12009);
        }
 
        return$secretKey;
     }
 
     /**
-     * @return int
+     * 获取token的过期时间
      */
     protected static function getExpireIn()
     {
@@ -298,7 +292,7 @@ class JWTAuth
     }
 
     /**
-     * @return mixed
+     * 是否需要随机串
      */
     protected static function needNonce()
     {
@@ -310,13 +304,12 @@ class JWTAuth
     }
 
     /**
-     * @return mixed
-     * @throws TokenException
+     *获取用户模型
      */
     protected static function getModel()
     {
         if(empty($model = Config::get("token.".self::$scene.".model"))) {
-            throw new TokenException(12009);
+            throw new JWTException(12009);
         }
 
         return $model;

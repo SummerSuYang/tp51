@@ -4,14 +4,14 @@ namespace app\lib\exception;
 
 use app\lib\enum\ExceptionEnum;
 
-class TokenException extends CommonException
+class JWTException extends CommonException
 {
     // HTTP 状态码
     protected $code = 403;
     // 错误消息
     protected $msg = 'TOKEN EXCEPTION';
     // 错误码 12000
-    protected $errorCode = ExceptionEnum::TOKEN;
+    protected $errorCode = ExceptionEnum::JWT;
     // 自定义的错误集
     protected $errorMsg = [
         //找不到前传过来的token
@@ -60,12 +60,17 @@ class TokenException extends CommonException
         ],
         12011=>[
             'code' => 401,
-            'msg' => '无法确定的用户'
+            'msg' => '用户不存在'
         ],
 
         12012=>[
             'code' => 401,
             'msg' => '无法生成载荷,用户信息的类型错误'
+        ],
+
+        12013=>[
+            'code' => 401,
+            'msg' => '账户异常'
         ],
     ];
 }

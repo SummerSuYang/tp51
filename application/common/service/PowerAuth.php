@@ -63,7 +63,7 @@ use think\facade\Request;
 use think\Exception;
 use app\lib\enum\Status;
 
-class AuthService
+class PowerAuth
 {
     protected $parentIds;
     private static $instance = null;
@@ -80,7 +80,7 @@ class AuthService
 
         $groupId = AuthAccessModel::where($where)->column('group_id');
 
-        $where = [['status', '=', Status::SHOW], ['id', 'in', $groupId]];
+        $where = [['status', '=', Status::NORMAL], ['id', 'in', $groupId]];
 
         return AuthGroupModel::where($where)->select()->toArray();
     }
@@ -222,7 +222,7 @@ class AuthService
         $maxLevel = AuthRuleModel::max('level');
 
         $where = [
-            ['status', '=', Status::SHOW],
+            ['status', '=', Status::NORMAL],
             ['level', '<', $maxLevel]
         ];
 
@@ -237,8 +237,8 @@ class AuthService
     public function checkAccess()
     {
         $where[] = [
-            ['status', '=', Status::SHOW],
-            ['name', '=', strtolower(Request::routeInfo()['route'])]
+            ['name', '=', strtolower(Request::routeInfo()['route'])],
+            ['status', '=', Status::NORMAL],
         ];
         //用户当前访问的路由
         $route = AuthRuleModel::get($where);
@@ -295,7 +295,7 @@ class AuthService
     {
         $groupId = Request::param('group_id');
 
-        $group = AuthGroupModel::get(['id' => $groupId, 'status' => Status::SHOW]);
+        $group = AuthGroupModel::get(['id' => $groupId, 'status' => Status::NORMAL]);
 
         $groupRulesId = explode(',', $group->rules);
 
@@ -325,7 +325,7 @@ class AuthService
      */
     protected function allRulesId()
     {
-        return AuthRuleModel::where('status',Status::SHOW)->column('id');
+        return AuthRuleModel::where('status',Status::NORMAL)->column('id');
     }
 
     /**
