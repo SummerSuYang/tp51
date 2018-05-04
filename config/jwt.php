@@ -9,6 +9,6 @@ return [
         'secret_key' => 'GlZpriHMdRo5ylMAu9zeFxbhIBNwPeOyw6104UT3',
         // 需要加入随机字符串
         'need_nonce_str' =>false,
-        'model' => AdminModel::class,
+        'model' => '',
     ],
 ];

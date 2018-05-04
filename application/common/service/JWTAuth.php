@@ -272,7 +272,7 @@ class JWTAuth
      */
     protected static function getSecretKey()
     {
-       if(empty($secretKey = Config::get("token.".self::$scene.".secret_key"))){
+       if(empty($secretKey = Config::get("jwt.".self::$scene.".secret_key"))){
            throw new JWTException(12009);
        }
 
@@ -284,7 +284,7 @@ class JWTAuth
      */
     protected static function getExpireIn()
     {
-        if(empty($expireIn = Config::get("token.".self::$scene.".expires_in"))){
+        if(empty($expireIn = Config::get("jwt.".self::$scene.".expires_in"))){
             return 3600;
         }
 
@@ -296,7 +296,7 @@ class JWTAuth
      */
     protected static function needNonce()
     {
-        if(empty($needNonce = Config::get("token.".self::$scene.".need_nonce_str"))){
+        if(empty($needNonce = Config::get("jwt.".self::$scene.".need_nonce_str"))){
             return false;
         }
 
@@ -308,7 +308,7 @@ class JWTAuth
      */
     protected static function getModel()
     {
-        if(empty($model = Config::get("token.".self::$scene.".model"))) {
+        if(empty($model = Config::get("jwt.".self::$scene.".model"))) {
             throw new JWTException(12009);
         }
 
