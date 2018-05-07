@@ -21,6 +21,7 @@ namespace app\common\service;
 
 use app\common\model\CommonModel;
 use app\lib\enum\Status;
+use app\lib\exception\CacheException;
 use app\lib\exception\JWTException;
 use Firebase\JWT\BeforeValidException;
 use Firebase\JWT\ExpiredException;
@@ -117,11 +118,18 @@ class JWTAuth
     /**
      * 根据用户的model或数组生成token
      */
-    public static function generateToken($account)
+    public static function generateToken($account, $scene = '')
     {
+        //验证场景
+        if( !empty($scene)) {
+            self::setScene($scene);
+        }
+
         $payload = self::createPayload($account);
 
-       return JWT::encode($payload, self::getSecretKey());
+        self::$returnToken = JWT::encode($payload, self::getSecretKey());
+
+        return self::$returnToken;
     }
 
     /**
@@ -145,7 +153,7 @@ class JWTAuth
         $payload['exp'] = Request::time() + self::getExpireIn();
         if (self::needNonce()) {
             // 需要随机字符串
-            $payload['nonce'] = self::uniqueNonceStr();
+            $payload['nonce'] = self::createNonce();
         }
 
         return $payload;
@@ -185,7 +193,7 @@ class JWTAuth
     /**
      * 验证随机串（刷新用）
      */
-    protected static function verifyNonce($payload = [], $markAsExpired = true)
+    protected static function verifyNonce($payload = [])
     {
         if( !key_exists('nonce', $payload)){
             throw new JWTException(12004);
@@ -193,14 +201,33 @@ class JWTAuth
 
         $nonceStr = $payload['nonce'];
 
-        if (Cache::has($nonceStr)) { // 存在表示已用过
+        //如果没有缓存就抛出异常
+        if ( !Cache::has($nonceStr)) {
             throw new JWTException(12003);
-        } else {
-            if($markAsExpired) {
-                // 标识已使用
-                Cache::set($nonceStr, 1, self::getExpireIn());
-            }
         }
+        else{
+            Cache::rm($nonceStr);
+        }
+    }
+
+    /**
+     * @return mixed
+     * @throws CacheException
+     * 生成随机串并缓存
+     */
+    protected static function createNonce()
+    {
+        $nonce = self::uniqueNonceStr();
+        if(Cache::has($nonce)){
+           throw new CacheException(17001);
+        }
+
+        $bool = Cache::set($nonce, 1, self::getExpireIn());
+        if( !$bool){
+            throw new CacheException(17002);
+        }
+
+        return $nonce;
     }
 
     /**
@@ -319,7 +346,7 @@ class JWTAuth
      * @return mixed
      * 生成唯一的字符串
      */
-    protected function uniqueNonceStr()
+    protected static function uniqueNonceStr()
     {
         return createUniqidNonceStr();
     }

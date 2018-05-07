@@ -23,18 +23,18 @@ class CommonModel extends Model
     protected $type = [
         'create_time' => 'integer',
         'update_time' => 'integer',
-        'delete_time' => 'integer',
 		'status' => 'integer'
     ];
     protected $insert = ['admin'];
     protected $update = ['admin'];
     //每一页的数据数
     protected static $perPage = 10;
+    public $dateFormat = 'Y-m-d H:i';
 
     /**
      * 分页列表
      */
-    protected static function lists(
+    public static function lists(
         $scope=[],$where=[],$with=[],$order=[],$append=[],$hidden=[]
     )
     {
@@ -94,7 +94,7 @@ class CommonModel extends Model
     /**
      * 获取一个对象
      */
-    protected static function getById($id, $scope = [], $with = [], $append = [], $hidden = [])
+    public static function getById($id, $scope = [], $with = [], $append = [], $hidden = [])
     {
         $record = static::scope($scope)->with($with)->find(['id' => $id]);
         if(is_null($record)) {
@@ -140,5 +140,25 @@ class CommonModel extends Model
         if(isPositiveInteger($perPage)){
             static::$perPage = $perPage;
         }
+    }
+
+    /**
+     * @param $value
+     * @return false|string
+     * 创造时间获取器
+     */
+    public function getCreateTimeAttr($value)
+    {
+        return date($this->dateFormat, $value);
+    }
+
+    /**
+     * @param $value
+     * @return false|string
+     * 修改时间获取器
+     */
+    public function getUpdateTimeAttr($value)
+    {
+        return date($this->dateFormat, $value);
     }
 }

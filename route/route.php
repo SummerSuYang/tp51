@@ -9,12 +9,13 @@
 // | Author: liu21st <liu21st@gmail.com>
 // +----------------------------------------------------------------------
 
-Route::get('think', function () {
-    return 'hello,ThinkPHP5!';
-});
+use think\facade\Route;
 
-Route::get('hello/:name', 'index/hello');
+// 全局路由
+Route::pattern([
+    'id'   => '\d+',
+]);
 
-return [
+//上传附件
+Route::post('files', 'home/UploadFile/uploadToPublic');
 
-];

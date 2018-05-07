@@ -36,24 +36,19 @@ trait UploadToOSSPublic
     ];
     //上传的应用场景
     private $OSSScene = 'default';
+    public $bucket;
 
     /**
      * @param int $type
      * @return $this
      * type等于1的时候是上传图片，等于2是上传其他文件
      */
-   protected function initialOSSClient($type = 1, $scene = '')
+   protected function initialOSSClient($scene = '')
     {
-        //检查type
-        if(!in_array($type, array_keys($this->uploadFileType))){
-            throw new UploadFileException(14001);
-        }
-
-        //文件类型
-        $this->uploadFileType = $type;
-
         //设置应用场景
-        if(!empty($scene)) $this->OSSScene = $scene;
+        if(!empty($scene)) {
+            $this->OSSScene = $scene;
+        }
 
         $this->OSSClient = new OssClient(
             $this->getOSSAccessKeyId(),
@@ -70,18 +65,18 @@ trait UploadToOSSPublic
      * @throws \Exception
      * 上传
      */
-    public function uploadToOSS($scene = '')
+    public function uploadToOSS($scene = '', $type = 1)
     {
         try{
-            //文件类型
-            $type = Request::param('type') ? : 1;
+            //上传的文件类型
+            $this->uploadFileType = $type;
 
             //文件信息
-            $info = $this->initialOSSClient($type, $scene)->checkUploadFile();
+            $info = $this->initialOSSClient($scene)->checkUploadFile();
 
             $object = $this->getOSSObject($info);
 
-            $return = $this->OSSClient->uploadFile($this->getOSSBucket(), $object, $info['tmp_name']);
+            $return = $this->OSSClient->uploadFile($this->bucket, $object, $info['tmp_name']);
 
             return $return['info']['url'];
         }catch (OssException $e){
@@ -143,7 +138,7 @@ trait UploadToOSSPublic
         //如果是文件，先判断文件是否存在，如果存在就使用随机名
         else{
             $object = $folder.$info['name'];
-            if($this->OSSClient->doesObjectExist($this->getOSSBucket(), $object)){
+            if($this->OSSClient->doesObjectExist($this->bucket, $object)){
                 $object = $folder.$this->OSSUniqueName().'.'.$info['extension'];
             }
         }
@@ -222,21 +217,23 @@ trait UploadToOSSPublic
     }
 
     /**
-     * @return mixed
+     * @param string $bucket
+     * @return $this
      * @throws UploadFileException
-     * 读取配置中的bucket
      */
-    protected function getOSSBucket()
+    public function setOSSBucket($bucket = '')
     {
-        if(empty($bucket = config("oss".".$this->OSSScene."."bucket"))) {
+        if(empty($bucket )) {
             throw new UploadFileException(14007);
         }
 
-        if( !$this->OSSClient->doesBucketExist($bucket)){
+        /*if( !$this->OSSClient->doesBucketExist($bucket)){
             throw new UploadFileException(14008);
-        }
+        }*/
 
-        return $bucket;
+       $this->bucket = $bucket;
+
+       return $this;
     }
 
     /**
@@ -244,8 +241,9 @@ trait UploadToOSSPublic
      * @return string
      * 获得上传文件的扩展名
      */
-    protected function getExtension($fileName)
+    protected function getExtension($file)
     {
+        $fileName = $file['name'];
         return getExtension($fileName);
     }
 }

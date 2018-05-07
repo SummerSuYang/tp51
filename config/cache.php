@@ -12,14 +12,19 @@
 // +----------------------------------------------------------------------
 // | 缓存设置
 // +----------------------------------------------------------------------
+use think\facade\Env;
 
 return [
     // 驱动方式
-    'type'   => 'File',
+    'type'   => Env::get('cache_type', 'File'),
     // 缓存保存目录
     'path'   => '',
     // 缓存前缀
     'prefix' => '',
     // 缓存有效期 0表示永久缓存
-    'expire' => 0,
+    'expire' => 3600,
+    'host' => Env::get('cache_host'),
+    'port' => Env::get('cache_port'),
+    'password' => Env::get('cache_password',''),
+    'select' => Env::get('cache_select'),
 ];
