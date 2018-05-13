@@ -19,3 +19,5 @@ Route::pattern([
 //上传附件
 Route::post('files', 'home/UploadFile/uploadToPublic');
 
+Route::get('/', 'test/Test/test');
+

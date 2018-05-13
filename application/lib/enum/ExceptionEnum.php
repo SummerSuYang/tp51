@@ -15,4 +15,8 @@ class ExceptionEnum
     const UPLOAD_FILE = 14000;
     //微信错误
     const WX = 15000;
+    //计算器异常
+    const CALCULATOR = 16000;
+    //公式计算异常
+    const FORMULA = 17000;
 }
