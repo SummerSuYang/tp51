@@ -33,8 +33,8 @@ class Formula
     ];
     //占位符常量数组,用于生成迭代器
     const placeholderValue =  [
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y' ,'z'
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+        't', 'u', 'v', 'w', 'x', 'y' ,'z'
     ];
     //返回的结果的小数点后的位数
     protected $resultScale = 2;
@@ -73,7 +73,7 @@ class Formula
     }
 
     /**
-     * 转换成中缀表达式，所有的变量和常量均由占位符替换
+     * 计算时替换所有的变量和常量
      */
     protected function replace($value)
     {
@@ -86,6 +86,7 @@ class Formula
         //用占位符替代整型常量
         $mapInt = $this->pregReplace('/[1-9][0-9]*/');
 
+        //正则检查
         if( !$this->pregCheckFormula()){
             throw new FormulaException(17003);
         }
