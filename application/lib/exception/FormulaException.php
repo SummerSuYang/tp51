@@ -13,7 +13,7 @@ namespace app\lib\exception;
 
 use app\lib\enum\ExceptionEnum;
 
-class CalculatorFormulaException extends CommonException
+class FormulaException extends CommonException
 {
     // HTTP 状态码
     protected $code = 400;
@@ -25,6 +25,14 @@ class CalculatorFormulaException extends CommonException
         17001 => [
             'code' => 400,
             'msg' => '后缀表达式错误导致栈异常为空'
+        ],
+        17002 => [
+            'code' => 400,
+            'msg' => '返回精度大于计算精度'
+        ],
+        17003 => [
+            'code' => 400,
+            'msg' => '公式格式错误'
         ],
     ];
 }

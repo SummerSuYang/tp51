@@ -15,14 +15,14 @@ use app\lib\exception\CalculatorException;
 
 class Calculator
 {
-    //小数点精度
-    protected $scale = 2;
+    //小数点后的位数
+    protected $scale =4;
 
     /**
      * @param $scale
      * @return $this
      * @throws CalculatorException
-     * 设置小数点精度
+     * 设置小数点后的位数
      */
     public function setScale($scale)
     {
@@ -36,6 +36,14 @@ class Calculator
     }
 
     /**
+     * @return int
+     */
+    public function returnScale()
+    {
+        return $this->scale;
+    }
+
+    /**
      * @param $strOne
      * @param $strTwo
      * @return string
@@ -43,7 +51,7 @@ class Calculator
      */
     public function add($strOne, $strTwo)
     {
-        $this->check($strOne, $strTwo);
+        $this->prepare($strOne, $strTwo);
         return bcadd($strOne, $strTwo, $this->scale);
     }
 
@@ -55,7 +63,7 @@ class Calculator
      */
     public function sub($strOne, $strTwo)
     {
-        $this->check($strOne, $strTwo);
+        $this->prepare($strOne, $strTwo);
         return bcsub($strOne, $strTwo, $this->scale);
     }
 
@@ -67,7 +75,7 @@ class Calculator
      */
     public function mul($strOne, $strTwo)
     {
-        $this->check($strOne, $strTwo);
+        $this->prepare($strOne, $strTwo);
         return bcmul($strOne, $strTwo, $this->scale);
     }
 
@@ -79,8 +87,9 @@ class Calculator
      */
     public function div($strOne, $strTwo)
     {
-        $this->check($strOne, $strTwo);
-        if($strTwo == '0'){
+        $this->prepare($strOne, $strTwo);
+        //empty('0')为true
+        if(empty($strTwo)){
             throw new CalculatorException(16003);
         }
         return bcdiv($strOne, $strTwo, $this->scale);
@@ -92,14 +101,10 @@ class Calculator
      * @throws CalculatorException
      * 转换并检查参数
      */
-    public function check(&$strOne, &$strTwo)
+    public function prepare(&$strOne, &$strTwo)
     {
         $strOne = (string)$strOne;
         $strTwo = (string)$strTwo;
-
-        if(strlen($strOne) == 0 || strlen($strTwo) == 0){
-            throw new CalculatorException(16002);
-        }
     }
 
     /**

@@ -118,8 +118,9 @@ class PowerAuth
 
     /**
      * 一个用户所有的权限
+     * 用户登录成功后以及刷新页面时调用此接口
      */
-    protected function userRulesList($userId)
+    public function userRulesList($userId)
     {
         $rulesId =$this->userRulesId($userId);
         return $this->treeRulesList($rulesId);
@@ -263,10 +264,11 @@ class PowerAuth
 
     /**
      * 返回一个权限组的所有权限的列表
+     * 新建或更新权限组权限的时候调用此接口
      */
     public function groupRules()
     {
-        if(!empty(Request::param('group_id'))) {
+        if(Request::has('group_id')) {
             return $this->updateGroupRules();
         }
         else {
