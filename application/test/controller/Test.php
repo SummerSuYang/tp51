@@ -17,18 +17,20 @@ class Test extends Controller
 {
     public function test()
     {
-        $str = 'ID113*ID113+ID114+10000*ID115*0.03+ID111*45.2';
+        $str = '0.001121*ID11+3/ID1+ID114/11211+100/ID113+ID115+ID111-ID112-45.2/ID112';
         $value = [
             111 => 0.11,
-            112 => 4.35,
+            112 => 0.1,
             113 => 50.64,
             114 => 10000.45,
-            115 => 40
+            115 => -40,
+            1 => 10,
+            11 => 1,
         ];
 
         $obj = new Formula();
-        //$bool = $obj->calculate($str, $value);
+        //$obj->check($str);
         $bool = $obj->calculate($str, $value);
-        dump($bool);die;
+        dump($bool);
     }
 }

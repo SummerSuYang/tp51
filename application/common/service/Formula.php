@@ -6,6 +6,11 @@
 |--------------------------------------------------------------------------
 |                                               公式计算器类
 |--------------------------------------------------------------------------
+|这个类有两个接口：
+|1.calculate方法。通过公式和公式中“参数变量”的值计算公式的结果
+|2.check方法。检查一个公式是否合法。在calculate方法中会自动判断公式
+|是否合法因此在计算时不需要调用此方法。
+|--------------------------------------------------------------------------
 */
 
 namespace app\common\service;
@@ -33,11 +38,17 @@ class Formula
     ];
     //占位符常量数组,用于生成迭代器
     const placeholderValue =  [
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm', 'n', 'o', 'p', 'q', 'r', 's',
         't', 'u', 'v', 'w', 'x', 'y' ,'z'
     ];
     //返回的结果的小数点后的位数
     protected $resultScale = 2;
+    //整型常量的正则
+    protected $pregInt = '/[0-9]+/';
+    //浮点型常量的正则
+    protected $pregFloat = '/[0-9]+\.[0-9]+/';
+    //变量的正则
+    protected $pregVar = '/ID\d+/';
 
     public function __construct()
     {
@@ -45,6 +56,7 @@ class Formula
 
         //占位符数组迭代器
         $this->placeholder = new \ArrayIterator(self::placeholderValue);
+
         //归位
         $this->placeholder->rewind();
     }
@@ -54,7 +66,7 @@ class Formula
      */
     public function calculate($formula, $value)
     {
-        $this->formula = $this->originalFormula = $formula;
+        $this->formula = $this->originalFormula = trim($formula);
 
         //占位符替换
         $this->replace($value);
@@ -81,10 +93,10 @@ class Formula
         $mapVar = $this->variableReplace($value);
 
         //用占位符替代浮点型常量
-        $mapFloat = $this->pregReplace('/[0-9]+\.[0-9]+/');
+        $mapFloat = $this->pregReplace($this->pregFloat);
 
         //用占位符替代整型常量
-        $mapInt = $this->pregReplace('/[1-9][0-9]*/');
+        $mapInt = $this->pregReplace($this->pregInt);
 
         //正则检查
         if( !$this->pregCheckFormula()){
@@ -102,9 +114,11 @@ class Formula
      */
     protected function variableReplace(array $value)
     {
-        preg_match_all('/ID\d+/', $this->formula, $match);
+        preg_match_all($this->pregVar, $this->formula, $match);
 
         $match = array_unique(current($match));
+
+        arsort($match);
 
         $map = [];
 
@@ -135,8 +149,13 @@ class Formula
     protected function pregReplace($preg)
     {
         preg_match_all($preg, $this->formula, $match);
+
         $match = array_unique(current($match));
+
+        arsort($match);
+
         $map = [];
+
         foreach ($match as $item){
             if( !$this->placeholder->valid()){
                 throw new FormulaException([
@@ -159,23 +178,18 @@ class Formula
     {
         $stack = new \SplStack();
 
-        //所有的符号
-        $symbol = array_keys($this->symbolPriority);
-
         //结果
         $result= '';
 
         for($i = 0; $i < strlen($this->formula); $i++){
             $char = $this->formula[$i];
             //如果是符号
-            if(in_array($char, $symbol)){
-                //如果栈顶的符号优先级大于当前符号的优先级,则栈中的元素依
-                //次出栈并作为结果字符串的一部分
-                if( !$stack->isEmpty() && $this->priority($stack->top(), $char)){
-                    while ( !$stack->isEmpty()){
+            if($this->isSymbol($char)){
+                //如果栈顶的符号优先级大于等于当前符号的优先级,则栈中的符号
+                //出栈并作为结果字符串的一部分
+               while( !$stack->isEmpty() && $this->priority($stack->top(), $char)){
                         //依次弹出栈顶元素
                         $result.= $stack->pop();
-                    }
                 }
 
                 //将当前符号压入栈
@@ -203,12 +217,9 @@ class Formula
     {
         $stack = new \SplStack();
 
-        //所有的符号
-        $symbol = array_keys($this->symbolPriority);
-
         for($i = 0; $i < strlen($this->formula); $i++){
             $char = $this->formula[$i];
-            if( !in_array($char, $symbol)){
+            if( !$this->isSymbol($char)){
                 if( !key_exists($char, $this->replaceValue)){
                     throw new FormulaException([
                         'msg' => '找不到占位符的值。公式为：'.$this->originalFormula.'。占位符为：'.$char,
@@ -243,21 +254,15 @@ class Formula
     }
 
     /**
-     * @param $symbolOne
-     * @param $symbolTwo
-     * @return bool
      * 比较符号优先级
      */
     protected function priority($symbolOne, $symbolTwo)
     {
-        return $this->symbolPriority[$symbolOne] > $this->symbolPriority[$symbolTwo];
+        return  $this->symbolPriority[$symbolOne] >= $this->symbolPriority[$symbolTwo];
     }
 
     /**
-     * @param $result
-     * @return string
-     * @throws FormulaException
-     * 返回精确地结果
+     * 返回合适地结果
      */
     protected function returnProperResult($result)
     {
@@ -308,20 +313,31 @@ class Formula
      */
     public function check($formula)
     {
-        $this->formula = $this->originalFormula = $formula;
+        $this->formula = $this->originalFormula = trim($formula);
 
         //用占位符替代变量
-        $this->pregReplace('/ID\d+/');
+        $this->pregReplace($this->pregVar);
 
         //用占位符替代浮点型常量
-        $this->pregReplace('/[0-9]+\.[0-9]+/');
+        $this->pregReplace($this->pregFloat);
 
         //用占位符替代整型常量
-        $this->pregReplace('/[1-9][0-9]*/');
+        $this->pregReplace($this->pregInt);
 
         //占位符迭代器归位
         $this->placeholder->rewind();
 
         return $this->pregCheckFormula();
+    }
+
+    /**
+     * @param $char
+     * @return bool
+     * 判断一个字符是不是“加减乘除”符号
+     */
+    protected function isSymbol($char)
+    {
+        $symbols = array_keys($this->symbolPriority);
+        return in_array($char, $symbols);
     }
 }
