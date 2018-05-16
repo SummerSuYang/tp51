@@ -10,13 +10,13 @@
 
 namespace app\common\model;
 
-class WXAdminModel extends CommonModel
+class WechatAdmin extends CommonModel
 {
     protected $insert = [];
     protected $update = [];
     public function admin()
     {
-        return $this->belongsTo('AdminModel', 'id', 'admin_id')->bind([
+        return $this->belongsTo('Admin', 'id', 'admin_id')->bind([
             'name', 'phone'
         ]);
     }

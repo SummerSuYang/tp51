@@ -33,5 +33,15 @@ class WXException extends CommonException
             'code' => 400,
             'msg' => '从微信服务器返回的数据有误'
         ],
+
+        15004 => [
+            'code' => 400,
+            'msg' => '无法获取appId',
+        ],
+
+        15005 => [
+            'code' => 400,
+            'msg' => '无法获取appSecret',
+        ],
     ];
 }

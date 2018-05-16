@@ -10,7 +10,6 @@ use app\lib\enum\Version;
 use think\Controller;
 use think\Exception;
 use think\facade\Request;
-use app\common\service\JWTAuth;
 
 /*
 |--------------------------------------------------------------------------

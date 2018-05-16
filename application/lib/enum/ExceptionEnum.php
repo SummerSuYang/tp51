@@ -19,4 +19,6 @@ class ExceptionEnum
     const CALCULATOR = 16000;
     //公式计算异常
     const FORMULA = 17000;
+    //扫码登录
+    const SCAN_LOGIN = 18000;
 }

@@ -12,7 +12,7 @@ namespace app\common\model;
 |                                     后台模块的省会模型
 |--------------------------------------------------------------------------
 */
-class CityModel extends CommonModel
+class City extends CommonModel
 {
     protected $hidden = ['id', 'pid'];
 }

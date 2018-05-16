@@ -13,7 +13,7 @@ namespace app\common\model;
 |--------------------------------------------------------------------------
 */
 
-class ProvincialModel extends CommonModel
+class Provincial extends CommonModel
 {
     public static function nameLists($scope=[],$where=[],$with=[],$order=[],$append = [])
     {
@@ -35,7 +35,7 @@ class ProvincialModel extends CommonModel
     }
     public function children()
     {
-        return $this->hasMany('CityModel','pid','value');
+        return $this->hasMany('City','pid','value');
     }
 
 }

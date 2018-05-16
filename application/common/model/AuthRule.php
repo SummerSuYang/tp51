@@ -10,7 +10,7 @@
 
 namespace app\common\model;
 
-class AuthRuleModel extends CommonModel
+class AuthRule extends CommonModel
 {
     protected $hidden = [
         'path', 'level', 'name', 'icon', 'condition', 'remark', 'is_menu', 'wight',
