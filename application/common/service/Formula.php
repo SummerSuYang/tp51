@@ -17,10 +17,8 @@ namespace app\common\service;
 
 use app\lib\exception\FormulaException;
 
-class Formula
+class Formula extends Calculator
 {
-    //计算器对象
-    protected $calculator;
     //公式
     protected $formula;
     //存储原始的公式
@@ -52,8 +50,6 @@ class Formula
 
     public function __construct()
     {
-        $this->calculator = new Calculator();
-
         //占位符数组迭代器
         $this->placeholder = new \ArrayIterator(self::placeholderValue);
 
@@ -99,7 +95,7 @@ class Formula
         $mapInt = $this->pregReplace($this->pregInt);
 
         //正则检查
-        if( !$this->pregCheckFormula()){
+        if( !$this->checkFormula()){
             throw new FormulaException(17003);
         }
 
@@ -118,6 +114,8 @@ class Formula
 
         $match = array_unique(current($match));
 
+        //比如公式为ID111+ID1111,如果先替换ID111那么公式就会变成类似
+	    //于a+a1的形式。因此要对变量进行降序排序才能保证替换的准确性
         arsort($match);
 
         $map = [];
@@ -183,18 +181,36 @@ class Formula
 
         for($i = 0; $i < strlen($this->formula); $i++){
             $char = $this->formula[$i];
+
             //如果是符号
             if($this->isSymbol($char)){
-                //如果栈顶的符号优先级大于等于当前符号的优先级,则栈中的符号
-                //出栈并作为结果字符串的一部分
-               while( !$stack->isEmpty() && $this->priority($stack->top(), $char)){
-                        //依次弹出栈顶元素
-                        $result.= $stack->pop();
-                }
+            	//如果是左括号就进栈
+            	if($char == '('){
+		            $stack->push($char);
+	            }
 
-                //将当前符号压入栈
-                $stack->push($char);
+	            //如果是右括号就弹出栈元素直到遇到左括号为止
+	            elseif ($char == ')'){
+            		while ($stack->top() != '('){
+			            $result.= $stack->pop();
+		            }
+		            $stack->pop();
+	            }
+
+	            //若果是加减乘除符号
+	            else{
+		            //如果栈顶的符号优先级大于等于当前符号的优先级,则栈中的符号
+		            //出栈并作为结果字符串的一部分
+		            while( !$stack->isEmpty() && $this->priority($stack->top(), $char)){
+			            //依次弹出栈顶元素
+			            $result.= $stack->pop();
+		            }
+
+		            //将当前符号压入栈
+		            $stack->push($char);
+	            }
             }
+
             //不是符号就是数字，数字不用进栈直接作为结果字符串的一部分
             else{
                 $result.= $char;
@@ -238,15 +254,22 @@ class Formula
                 }
                 $one = $stack->pop();
                 //计算, 计算的精度比返回的精度多一位
-                $result = $this->calculator->setScale($this->resultScale + 1)
-                                                              ->calculateBySymbol($one, $two, $char);
+                $result = $this->setCalculateScale($this->resultScale + 1)
+                                         ->calculateBySymbol($one, $two, $char);
                 //压入栈
                 $stack->push($result);
             }
         }
 
+	    if($stack->isEmpty()){
+		    throw new FormulaException(17001);
+	    }
         //结果
         $result = $stack->pop();
+
+        if( !$stack->isEmpty()){
+        	throw new FormulaException(17004);
+        }
 
         $this->destroyStack($stack);
 
@@ -258,7 +281,11 @@ class Formula
      */
     protected function priority($symbolOne, $symbolTwo)
     {
-        return  $this->symbolPriority[$symbolOne] >= $this->symbolPriority[$symbolTwo];
+    	if($symbolOne == '('){
+    		return false;
+	    }
+        return  $this->symbolPriority[$symbolOne] >=
+                      $this->symbolPriority[$symbolTwo];
     }
 
     /**
@@ -266,30 +293,40 @@ class Formula
      */
     protected function returnProperResult($result)
     {
-        //计算精度
-        $calculateScale = $this->calculator->returnScale();
-        //计算精度与返回结果的精度之间的差值
-        $gap = $calculateScale - $this->resultScale;
-        //计算精度必须大于返回结果的精度，不然结果可能不准
-        if($gap <= 0){
-            throw new FormulaException(17002);
-        }
+    	//小数点的位置
+    	$potPosition = strpos($result, '.');
+    	if( !$potPosition){
+    		return $result.'.00';
+	    }
 
-        //进行四舍五入操作
-        $subLength = strlen($result) - $gap - 1;
-        $str = substr($result, 0, $subLength);
-        $edgeChar = $result[$subLength];
-        $overflow = $result[$subLength + 1];
-        if((int)$overflow >= 5){
-            $edgeChar =(string)((int)$edgeChar + 1);
-        }
+    	//整数部分，包括小数点
+    	$integer = substr($result, 0, $potPosition + 1);
 
-        return $str.$edgeChar;
+    	//小数部分
+    	$decimal = substr($result, $potPosition + 1);
+
+    	$gap = strlen($decimal) - $this->resultScale;
+
+    	if($gap == 0){
+    		return $result;
+	    }
+	    elseif ($gap < 0){
+    		$gap = 0 - $gap;
+    		for($i = 0; $i < $gap; $i++){
+    			$result.= '0';
+		    }
+
+		    return $result;
+	    }
+	    else{
+		    $decimal = substr($decimal, 0, $this->resultScale);
+		    return $integer.$decimal;
+	    }
     }
 
     /**
      * @param $stack
-     * 销毁栈
+     * 销毁计算中所使用的栈
      */
     protected function destroyStack($stack)
     {
@@ -303,9 +340,29 @@ class Formula
      */
     protected function pregCheckFormula()
     {
-        return preg_match('/^([a-z][\+\-\*\/])+[a-z]$/', $this->formula);
+        return preg_match('/^(\(*[a-z]\)*[\+\-\*\/])+[a-z]\)*$/', $this->formula);
     }
 
+	/**
+	 * @return bool
+	 * 检查左右括号的个数是否相等
+	 */
+    protected function parenthesisCheckFormula()
+    {
+    	return substr_count($this->formula, '(') ===
+	                substr_count($this->formula, ')');
+    }
+
+	/**
+	 * @return bool
+	 * @throws FormulaException
+	 * 检查公式格式
+	 */
+    protected function checkFormula()
+    {
+    	return $this->parenthesisCheckFormula() &&
+	                 $this->pregCheckFormula();
+    }
     /**
      * @param $formula
      * @throws FormulaException
@@ -338,6 +395,7 @@ class Formula
     protected function isSymbol($char)
     {
         $symbols = array_keys($this->symbolPriority);
+        $symbols = array_merge($symbols, ['(',')']);
         return in_array($char, $symbols);
     }
 }

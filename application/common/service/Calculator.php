@@ -24,7 +24,7 @@ class Calculator
      * @throws CalculatorException
      * 设置小数点后的位数
      */
-    public function setScale($scale)
+    public function setCalculateScale($scale)
     {
         if( !isPositiveInteger($scale)){
             throw new CalculatorException(16001);
@@ -38,7 +38,7 @@ class Calculator
     /**
      * @return int
      */
-    public function returnScale()
+    public function returnCalculateScale()
     {
         return $this->scale;
     }

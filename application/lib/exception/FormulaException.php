@@ -34,5 +34,9 @@ class FormulaException extends CommonException
             'code' => 400,
             'msg' => '公式格式错误'
         ],
+        17004 => [
+	        'code' => 400,
+	        'msg' => '公式计算过程中出错，结果栈中不止一个元素'
+        ],
     ];
 }

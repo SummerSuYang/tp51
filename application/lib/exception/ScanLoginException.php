@@ -26,17 +26,7 @@ class ScanLoginException extends CommonException
 
         18002 => [
             'code' => 400,
-            'msg' => '无效的应用场景'
-        ],
-
-        18003 => [
-            'code' => 400,
-            'msg' => '暂不支持的扫码方式'
-        ],
-
-        18004 => [
-            'code' => 400,
-            'msg' => '配置中缺少存储第三方用户信息的模型'
+            'msg' => '无效的扫码方式'
         ],
     ];
 }
