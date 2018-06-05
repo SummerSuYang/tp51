@@ -76,8 +76,9 @@ class Formula extends Calculator
         //逆波兰计算法计算
         $result = $this->RPN();
 
+        return $result;
         //四舍五入返回
-        return $this->returnProperResult($result);
+        //return $this->returnProperResult($result);
     }
 
     /**
@@ -96,7 +97,9 @@ class Formula extends Calculator
 
         //正则检查
         if( !$this->checkFormula()){
-            throw new FormulaException(17003);
+            throw new FormulaException([
+            	'code' => 400,
+                'msg' => '公式 '.$this->originalFormula.' 格式错误']);
         }
 
         //占位符与真实值之间的关系映射
@@ -254,7 +257,7 @@ class Formula extends Calculator
                 }
                 $one = $stack->pop();
                 //计算, 计算的精度比返回的精度多一位
-                $result = $this->setCalculateScale($this->resultScale + 1)
+                $result = $this->setCalculateScale($this->resultScale)
                                          ->calculateBySymbol($one, $two, $char);
                 //压入栈
                 $stack->push($result);
@@ -340,7 +343,8 @@ class Formula extends Calculator
      */
     protected function pregCheckFormula()
     {
-        return preg_match('/^(\(*[a-z]\)*[\+\-\*\/])+[a-z]\)*$/', $this->formula);
+        //return preg_match('/^(\(*[a-z]\)*[\+\-\*\/])+[a-z]\)*$/', $this->formula);
+	    return preg_match('/^(\(*[a-z]\)*[\+\-\*\/])*[a-z]*\)*$/', $this->formula);
     }
 
 	/**
