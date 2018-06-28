@@ -59,13 +59,48 @@ class CommonValidate extends Validate implements ValidateContract
         return regex($value, $rule);
     }
 
+	/**
+	 * @return $this
+	 * 新建时的应用场景
+	 */
     protected function sceneCreate()
     {
         return $this;
     }
 
+	/**
+	 * @return $this
+	 * 更新时的应用场景
+	 */
     protected function sceneUpdate()
     {
         return $this;
     }
+
+	/**
+	 * @return $this
+	 * 列表的应用场景
+	 */
+	protected function sceneIndex()
+	{
+		return $this;
+	}
+
+	/**
+	 * @return $this
+	 * 对象的应用场景
+	 */
+	protected function sceneRead()
+	{
+		return $this;
+	}
+
+	/**
+	 * @return $this
+	 * 删除的应用场景
+	 */
+	protected function sceneDelete()
+	{
+		return $this;
+	}
 }

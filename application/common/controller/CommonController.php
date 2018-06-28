@@ -82,6 +82,8 @@ class CommonController extends Controller implements ControllerContract
      */
     public function index()
     {
+	    $this->validate->paramsCheck('index', 'get');
+
         $data = $this->logic->getLists();
 
         return $this->response(1201, $data);
@@ -94,6 +96,8 @@ class CommonController extends Controller implements ControllerContract
      */
     public function read($id)
     {
+	    $this->validate->paramsCheck('read', 'get');
+
         $data = $this->logic->getById($id);
 
         return $this->response(1201, ['data' => $data]);
@@ -133,6 +137,8 @@ class CommonController extends Controller implements ControllerContract
      */
     public function delete($id)
     {
+	    $this->validate->paramsCheck('delete', 'delete');
+
         $data = $this->logic->delete($id);
 
         return $this->response(1401, ['data' => $data]);
