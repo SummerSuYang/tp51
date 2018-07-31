@@ -20,13 +20,13 @@ class CommonController extends Controller implements ControllerContract
 {
     //逻辑层与验证器，需要子类通过构造函数依赖注入
     protected $logic;
+
     protected $validate;
+
+    protected $type = 'json';
 
     public function __construct(LogicContract $logic, ValidateContract $validate)
     {
-        $this->logic = $logic;
-        $this->validate = $validate;
-
         parent::__construct();
     }
 
@@ -36,7 +36,7 @@ class CommonController extends Controller implements ControllerContract
      * @return \think\response\Json
      * 通用返回
      */
-    public function response($return, $data = [], $type = 'json')
+    public function response($return, $data = [])
     {
         list($httpCode, $msg) = CodeToResponse::show($return);
 
@@ -57,8 +57,9 @@ class CommonController extends Controller implements ControllerContract
             'token' => CurrentUser::getResponseToken(),
         ];
 
-        if(!method_exists($this, $method = 'response'.ucfirst($type))) {
-            throw new Exception('无法返回指定类型的数据');
+        if(!method_exists($this, $method = 'response'.ucfirst($this->type))){
+        	$msg = '无法返回类型为'.$this->type.'类型的数据';
+            throw new Exception($msg);
         }
 
         return call_user_func_array([$this, $method], [$returnArray, $httpCode, $header]);
@@ -84,7 +85,7 @@ class CommonController extends Controller implements ControllerContract
     {
 	    $this->validate->paramsCheck('index', 'get');
 
-        $data = $this->logic->getLists();
+        $data = $this->logic->getPaginate();
 
         return $this->response(1201, $data);
     }

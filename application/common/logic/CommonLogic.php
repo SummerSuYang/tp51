@@ -26,33 +26,55 @@ abstract class CommonLogic implements LogicContract
     protected $order = [];
     //查询追加
     protected $append = [];
-    //隐藏的字段
-    protected $hidden = [];
-    //向数据库写入的字段，也就是新建和更新时的字段
-    protected $writeFields = [];
+    //允许向数据库写入的字段，也就是新建时允许字段
+    protected $createFields = [];
+	//向数据库写入的字段，也就是更新时的字段
+	protected $updateFields = [];
+	//向数据库查询的字段
+	protected $queryField = [];
+	//经过过滤器过滤后的字段
+	protected $fields = [];
     //基础model，由抽象方法configModel指定
     private $model;
 
-    //逻辑层的基础模型
-    abstract protected function configModel();
+    //查找一条记录,返回model
+    abstract public function getById($id);
 
-    //查找一条记录
-    abstract public function getById();
+    abstract protected function model();
 
     public function __construct()
     {
-        $this->configModel();
+    	$this->model();
+
+        $this->fieldFilter();
     }
 
-    /**
-     * @return mixed
-     * 列表
-     */
-    public function getLists()
+	/**
+	 * @return array
+	 * 分页数据
+	 */
+    public function getPaginate()
     {
-        return ($this->model)::lists(
-            $this->scope, $this->where, $this->with,
-            $this->order, $this->append, $this->hidden);
+    	$this->orderFieldFilter();
+
+        return ($this->model)::fetchPaginate(
+            $this->scope, $this->where, $this->with, $this->order,
+            $this->append
+        );
+    }
+
+	/**
+	 * @return mixed
+	 * 返回所有的查询数据
+	 */
+    public function getCollection()
+    {
+    	$this->orderFieldFilter();
+
+    	return ($this->model)::fetchCollection(
+    		$this->scope, $this->where, $this->with, $this->order,
+		    $this->append
+	    );
     }
 
     /**
@@ -62,13 +84,9 @@ abstract class CommonLogic implements LogicContract
      */
     public function create()
     {
-        try{
-            $para = $this->fieldFilter();
-            $new = ($this->model)::create($para);
-            return ['id' => $new->id];
-        }catch (Exception $e){
-            throw $e;
-        }
+    	$new = ($this->model)::create($this->fields);
+
+    	return ['id' => $new->id];
     }
 
     /**
@@ -79,114 +97,65 @@ abstract class CommonLogic implements LogicContract
      */
     public function updateById($id)
     {
-        $record = $this->getById($id, false);
-        try{
-            $para = $this->fieldFilter();
-            foreach ($para as $k => $v) $record->{$k} = $v;
-            $record->save();
+        $record = $this->getById($id);
 
-            return ['id' => $record->id];
-        }catch (Exception $e){
-            throw $e;
+        foreach ($this->fields as $k => $item){
+        	$record->{$k} = $item;
         }
+
+        $record->save();
+
+        return ['id' => $record->id];
     }
 
     /**
      * @param $id
      * @return array
-     * @throws Exception
      * 删除
      */
     public function delete($id)
     {
-        $record = $this->getById($id, false);
-        try{
-            $record->delete();
+        $record = $this->getById($id);
 
-            return ['id' => $record->id];
-        }catch (Exception $e){
-            throw $e;
-        }
+	    $record->delete();
+
+	    return ['id' => $record->id];
     }
 
-    /**
-     * @return array
-     * 获取不同请求方法下的字段
-     */
+	/**
+	 * 过滤从前端传过来的字段
+	 */
     protected function fieldFilter()
     {
-        $fields = [];
-        if(method_exists($this, $method = Request::method().'Field'))
-            $fields = $this->{$method};
-
-        return Request::only($fields, Request::method());
-    }
-
-    /**
-     * @return array
-     * 新建时的字段
-     */
-    protected function postField()
-    {
-        return $this->writeFields;
-    }
-
-    /**
-     * @return array
-     * 更新时的字段
-     */
-    protected function putField()
-    {
-        return $this->writeFields;
-    }
-
-    /**
-     * @param $property
-     * @param array $field
-     * @return $this
-     * 向某个成员数组追加一些字段
-     */
-    protected function appendField($property, $field = [])
-    {
-        if(property_exists($this, $property) && is_array( $this->{$propert})){
-            if(is_string($field)) $field = explode(',', $field);
-            $this->{$propert} = array_merge($this->{$propert}, $field);
-            //去重
-            array_unique($this->{$property});
+    	//允许向数据库写入的字段
+        if (Request::isPost()){
+        	$this->fields = Request::only($this->createFields, 'post');
         }
 
-        return $this;
-    }
-
-    /**
-     * @param $property
-     * @param array $field
-     * @return $this
-     * 向某个数组成员移除一些字段，慎用
-     */
-    protected function removeField($property, $field = [])
-    {
-        if(property_exists($this, $property) && is_array( $this->{$propert})){
-            if(is_string($field)) $field = explode(',', $field);
-            $this->{$property} = array_diff($this->{$property}, $field);
+        //允许向数据库更新的字段
+        if (Request::isPut()){
+	        $this->fields = Request::only($this->updateFields, 'put');
         }
 
-        return $this;
+        //允许向数据库查询的字段
+        if(Request::isGet()){
+        	$this->fields = Request::only($this->queryField, 'get');
+        }
     }
 
-    /**
-     * @param $property
-     * @param array $field
-     * @return $this
-     * 只返回某个数组成员的一部分字段
-     */
-    protected function onlyField($property, $field = [])
+	/**
+	 * 处理排序
+	 */
+    protected function orderFieldFilter()
     {
-        if(property_exists($this, $property) && is_array( $this->{$propert})){
-            if(is_string($field)) $field = explode(',', $field);
-            $this->{$property} = $field;
-        }
+    	$this->order = [];
+    }
 
-        return $this;
+	/**
+	 * 查询搜索条件
+	 */
+    protected function buildWhere()
+    {
+    	$this->where = [];
     }
 }
